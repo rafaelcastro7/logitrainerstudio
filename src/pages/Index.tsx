@@ -150,7 +150,8 @@ const Index = () => {
               {isChatOpen && <ChatPanel />}
             </AnimatePresence>
             <AnimatePresence>
-              {selectedClipId && currentView === 'timeline' && <ClipPropertiesPanel />}
+              {(selectedClipId || selectedTransitionId) && currentView === 'timeline' && <ClipPropertiesPanel />}
+            </AnimatePresence>
             </AnimatePresence>
           </div>
         </div>
