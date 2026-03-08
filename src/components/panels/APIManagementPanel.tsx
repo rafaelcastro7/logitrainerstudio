@@ -477,26 +477,5 @@ export function APIManagementPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-function APIKeyInput({ providerId, onSave }: { providerId: string; onSave: (key: string) => void }) {
-  const [value, setValue] = useState('');
-  const provider = AI_PROVIDERS.find((p) => p.id === providerId);
-
-  return (
-    <div className="flex gap-2 mt-2">
-      <input
-        type="password"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={provider?.keyPlaceholder || 'Enter API key...'}
-        className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-      />
-      <button
-        onClick={() => { if (value.trim()) { onSave(value.trim()); setValue(''); } }}
-        disabled={!value.trim()}
-        className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-      >
-        Save
-      </button>
-    </div>
   );
 }
