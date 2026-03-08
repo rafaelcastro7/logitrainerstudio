@@ -26,13 +26,15 @@ import { Navigate } from 'react-router-dom';
 import { Loader2, Shield, Clock } from 'lucide-react';
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const { isApproved, isAdmin, loading: approvalLoading } = useApproval();
   const { currentView, isChatOpen, scenes, selectedClipId, selectedTransitionId } = useProjectStore();
   const { saveProject, listProjects, loadProject, deleteProject } = useProjects();
   const [showWelcome, setShowWelcome] = useState(true);
   const [imageLabSceneId, setImageLabSceneId] = useState<string | null>(null);
   const [showAPIPanel, setShowAPIPanel] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
 
