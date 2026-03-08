@@ -149,6 +149,10 @@ export const useProjectStore = create<ProjectStore>()(
     setZoom: (zoom) => set((s) => { s.timeline.zoom = zoom; }),
     togglePlay: () => set((s) => { s.timeline.isPlaying = !s.timeline.isPlaying; }),
     addClip: (clip) => set((s) => { s.timeline.clips.push({ ...clip, id: uuid() }); }),
+    updateClip: (id, updates) => set((s) => {
+      const idx = s.timeline.clips.findIndex((c) => c.id === id);
+      if (idx !== -1) Object.assign(s.timeline.clips[idx], updates);
+    }),
 
     logs: [],
     addLog: (level, message) =>
