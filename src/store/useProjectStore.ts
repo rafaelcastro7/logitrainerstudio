@@ -194,6 +194,17 @@ export const useProjectStore = create<ProjectStore>()(
 
       isChatOpen: false,
       toggleChat: () => set((s) => { s.isChatOpen = !s.isChatOpen; }),
+
+      selectedClipId: null as string | null,
+      setSelectedClipId: (id) => set((s) => { s.selectedClipId = id; }),
+
+      importProject: (data) => set((s) => {
+        s.projectTitle = data.title || 'Imported Project';
+        s.brief = data.brief || '';
+        s.scenes = data.scenes || [];
+        s.timeline = data.timeline || { clips: [], playheadPosition: 0, zoom: 50, isPlaying: false, duration: 60 };
+        s.assets = data.assets || {};
+      }),
     })),
     {
       limit: 50,
