@@ -106,6 +106,17 @@ export function TopBar({ onOpenAPIPanel, onSave, onOpenAdminPanel }: { onOpenAPI
           <span>⌘K</span>
         </div>
 
+        {/* Admin panel */}
+        {onOpenAdminPanel && (
+          <button
+            onClick={onOpenAdminPanel}
+            className="flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-[10px] font-bold text-primary transition-all hover:bg-primary/20"
+          >
+            <Shield className="h-3 w-3" />
+            Admin
+          </button>
+        )}
+
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
