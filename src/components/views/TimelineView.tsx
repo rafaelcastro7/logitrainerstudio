@@ -532,15 +532,34 @@ export function TimelineView() {
       {/* Timeline content */}
       <div className="flex-1 overflow-auto" ref={containerRef}>
         <div style={{ width: totalWidth, minWidth: '100%' }}>
-          <canvas
-            ref={rulerRef}
-            onClick={handleRulerClick}
-            onMouseDown={() => setIsRulerDragging(true)}
-            onMouseMove={handleRulerDrag}
-            onMouseUp={() => setIsRulerDragging(false)}
-            onMouseLeave={() => setIsRulerDragging(false)}
-            className="cursor-pointer border-b border-border"
-          />
+          <div className="relative">
+            <canvas
+              ref={rulerRef}
+              onClick={handleRulerClick}
+              onMouseDown={() => setIsRulerDragging(true)}
+              onMouseMove={handleRulerDrag}
+              onMouseUp={() => setIsRulerDragging(false)}
+              onMouseLeave={() => setIsRulerDragging(false)}
+              className="cursor-pointer border-b border-border"
+            />
+            {/* Timeline Markers */}
+            {(timeline.markers || []).map((marker) => (
+              <div
+                key={marker.id}
+                className="absolute top-0 z-20 group cursor-pointer"
+                style={{ left: marker.time * pxPerSec - 5 }}
+                onClick={(e) => { e.stopPropagation(); setPlayhead(marker.time); }}
+                onDoubleClick={(e) => { e.stopPropagation(); removeMarker(marker.id); toast.success('Marker removed'); }}
+              >
+                <Flag className="h-4 w-4" style={{ color: marker.color }} />
+                <div className="absolute top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <span className="text-[8px] font-mono bg-card/90 backdrop-blur-sm rounded px-1 py-0.5 border border-border" style={{ color: marker.color }}>
+                    {marker.label} · {marker.time.toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {tracks.map(({ label, fullLabel, icon: Icon, trackKey, gradient, borderColor, hoverBorder }) => {
             const trackClips = timeline.clips.filter((c) => {
