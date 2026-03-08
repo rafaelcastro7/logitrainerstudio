@@ -10,8 +10,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function AppSidebar() {
+export function AppSidebar({ onToggleAlerts, isAlertsOpen }: { onToggleAlerts?: () => void; isAlertsOpen?: boolean }) {
   const { currentView, setView, toggleChat, isChatOpen, logs } = useProjectStore();
+  const { unreadCount } = useAlertStore();
   const { t } = useI18n();
   const recentErrors = logs.filter((l) => l.level === 'error').length;
 
