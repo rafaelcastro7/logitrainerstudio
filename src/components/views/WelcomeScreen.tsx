@@ -1,13 +1,22 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Activity, Sparkles, ArrowRight, Zap, Film, Clock, Cpu } from 'lucide-react';
+import { Activity, Sparkles, ArrowRight, Zap, Film, Clock, Cpu, Trash2, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/store/useProjectStore';
+import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n/useI18n';
 import heroBg from '@/assets/hero-bg.jpg';
 
-export function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
+interface WelcomeScreenProps {
+  onEnter: () => void;
+  recentProjects?: { id: string; title: string; updated_at: string }[];
+  onLoadProject?: (id: string) => void;
+  onDeleteProject?: (id: string) => void;
+}
+
+export function WelcomeScreen({ onEnter, recentProjects = [], onLoadProject, onDeleteProject }: WelcomeScreenProps) {
   const { setProjectTitle, addLog } = useProjectStore();
+  const { user } = useAuth();
   const { t } = useI18n();
   const [title, setTitle] = useState('');
   const [step, setStep] = useState<'hero' | 'create'>('hero');
@@ -73,6 +82,11 @@ export function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
               <p className="mb-8 text-sm font-mono text-muted-foreground tracking-wider uppercase">
                 {t('app.tagline')}
               </p>
+              {user && (
+                <p className="mb-4 text-xs text-muted-foreground">
+                  Signed in as <span className="text-primary">{user.email}</span>
+                </p>
+              )}
             </motion.div>
 
             <motion.div
@@ -97,6 +111,43 @@ export function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
                 </motion.div>
               ))}
             </motion.div>
+
+            {/* Recent Projects */}
+            {recentProjects.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 }}
+                className="mb-6 w-full max-w-md"
+              >
+                <p className="mb-2 text-xs font-mono text-muted-foreground uppercase tracking-wider">Recent Projects</p>
+                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                  {recentProjects.slice(0, 5).map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-2 rounded-md border border-border bg-card/50 px-3 py-2 backdrop-blur-sm group"
+                    >
+                      <FolderOpen className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <button
+                        onClick={() => onLoadProject?.(p.id)}
+                        className="flex-1 text-left text-xs text-foreground hover:text-primary transition-colors truncate"
+                      >
+                        {p.title}
+                      </button>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {new Date(p.updated_at).toLocaleDateString()}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteProject?.(p.id); }}
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             <motion.button
               initial={{ opacity: 0 }}
