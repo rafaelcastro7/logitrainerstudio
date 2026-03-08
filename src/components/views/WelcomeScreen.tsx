@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Activity, Sparkles, ArrowRight, Zap, Film, Clock, Cpu, Trash2, FolderOpen, Coffee, ShoppingBag, GraduationCap, Gamepad2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n/useI18n';
+import { AI_PROVIDERS } from '@/services/apiRegistry';
 
 interface WelcomeScreenProps {
   onEnter: () => void;
