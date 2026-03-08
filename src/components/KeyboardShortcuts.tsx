@@ -9,6 +9,11 @@ const shortcuts = [
   { keys: ['Home'], action: { en: 'Go to start', fr: 'Aller au début', es: 'Ir al inicio' } },
   { keys: ['End'], action: { en: 'Go to end', fr: 'Aller à la fin', es: 'Ir al final' } },
   { keys: ['+', '−'], action: { en: 'Zoom in / out', fr: 'Zoom avant / arrière', es: 'Acercar / Alejar' } },
+  { keys: ['⌘K'], action: { en: 'Command Palette', fr: 'Palette de commandes', es: 'Paleta de comandos' } },
+  { keys: ['⌘Z'], action: { en: 'Undo', fr: 'Annuler', es: 'Deshacer' } },
+  { keys: ['⌘⇧Z'], action: { en: 'Redo', fr: 'Refaire', es: 'Rehacer' } },
+  { keys: ['D'], action: { en: 'Duplicate selected clip', fr: 'Dupliquer le clip', es: 'Duplicar clip seleccionado' } },
+  { keys: ['Del'], action: { en: 'Delete selected clip', fr: 'Supprimer le clip', es: 'Eliminar clip seleccionado' } },
   { keys: ['?'], action: { en: 'Toggle this overlay', fr: 'Afficher/masquer ce panneau', es: 'Mostrar/ocultar este panel' } },
 ];
 
