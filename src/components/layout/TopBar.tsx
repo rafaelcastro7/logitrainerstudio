@@ -23,6 +23,7 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
     architect: t('nav.architect'),
     studio: t('nav.studio'),
     timeline: t('nav.timeline'),
+    dashboard: 'Dashboard',
   };
 
   const totalAssets = scenes.length * 3;
@@ -93,6 +94,13 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
               {avgLatency > 0 && <span className="text-muted-foreground/30">~{avgLatency}ms</span>}
             </>
           )}
+        </div>
+
+        {/* Command Palette hint */}
+        <div className="hidden md:flex items-center gap-1 rounded-md border border-border/50 px-2.5 py-1.5 text-[10px] text-muted-foreground/40 font-mono cursor-pointer hover:border-primary/30 hover:text-muted-foreground transition-all"
+          onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+        >
+          <span>⌘K</span>
         </div>
 
         {/* Language switcher */}

@@ -6,6 +6,8 @@ import { TopBar } from '@/components/layout/TopBar';
 import { ArchitectView } from '@/components/views/ArchitectView';
 import { StudioView } from '@/components/views/StudioView';
 import { TimelineView } from '@/components/views/TimelineView';
+import { DashboardView } from '@/components/views/DashboardView';
+import { CommandPalette } from '@/components/CommandPalette';
 import { ChatPanel } from '@/components/panels/ChatPanel';
 import { LogConsole } from '@/components/panels/LogConsole';
 import { WelcomeScreen } from '@/components/views/WelcomeScreen';
@@ -101,11 +103,14 @@ const Index = () => {
         return <StudioView onOpenImageLab={(id) => setImageLabSceneId(id)} />;
       case 'timeline':
         return <TimelineView />;
+      case 'dashboard':
+        return <DashboardView />;
     }
   };
 
   return (
     <>
+      <CommandPalette />
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         <AppSidebar onToggleAlerts={() => setShowAlerts(!showAlerts)} isAlertsOpen={showAlerts} />
         <div className="flex flex-1 flex-col overflow-hidden">
