@@ -14,6 +14,7 @@ import { WelcomeScreen } from '@/components/views/WelcomeScreen';
 import { ImageLab } from '@/components/views/ImageLab';
 import { APIManagementPanel } from '@/components/panels/APIManagementPanel';
 import { AlertsPanel } from '@/components/panels/AlertsPanel';
+import { ClipPropertiesPanel } from '@/components/panels/ClipPropertiesPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
@@ -24,7 +25,7 @@ import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const { currentView, isChatOpen, scenes } = useProjectStore();
+  const { currentView, isChatOpen, scenes, selectedClipId } = useProjectStore();
   const { saveProject, listProjects, loadProject, deleteProject } = useProjects();
   const [showWelcome, setShowWelcome] = useState(true);
   const [imageLabSceneId, setImageLabSceneId] = useState<string | null>(null);
@@ -146,6 +147,9 @@ const Index = () => {
             </AnimatePresence>
             <AnimatePresence>
               {isChatOpen && <ChatPanel />}
+            </AnimatePresence>
+            <AnimatePresence>
+              {selectedClipId && currentView === 'timeline' && <ClipPropertiesPanel />}
             </AnimatePresence>
           </div>
         </div>

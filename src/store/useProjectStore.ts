@@ -33,6 +33,9 @@ export interface TimelineClip {
   track: 'video' | 'audio';
   startTime: number;
   duration: number;
+  name?: string;
+  opacity?: number;   // 0-100, default 100
+  volume?: number;    // 0-100, default 100
 }
 
 export interface TimelineState {
@@ -97,6 +100,13 @@ interface ProjectStore {
 
   isChatOpen: boolean;
   toggleChat: () => void;
+
+  // Selection
+  selectedClipId: string | null;
+  setSelectedClipId: (id: string | null) => void;
+
+  // Import
+  importProject: (data: { title: string; brief: string; scenes: any[]; timeline: any; assets: any }) => void;
 }
 
 export const useProjectStore = create<ProjectStore>()(
@@ -184,6 +194,17 @@ export const useProjectStore = create<ProjectStore>()(
 
       isChatOpen: false,
       toggleChat: () => set((s) => { s.isChatOpen = !s.isChatOpen; }),
+
+      selectedClipId: null as string | null,
+      setSelectedClipId: (id) => set((s) => { s.selectedClipId = id; }),
+
+      importProject: (data) => set((s) => {
+        s.projectTitle = data.title || 'Imported Project';
+        s.brief = data.brief || '';
+        s.scenes = data.scenes || [];
+        s.timeline = data.timeline || { clips: [], playheadPosition: 0, zoom: 50, isPlaying: false, duration: 60 };
+        s.assets = data.assets || {};
+      }),
     })),
     {
       limit: 50,

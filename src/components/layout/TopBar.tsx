@@ -4,9 +4,10 @@ import { useI18n } from '@/i18n/useI18n';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Locale } from '@/i18n/translations';
-import { Zap, ChevronRight, Settings2, Activity, LogOut, Save, UserCircle, Check, Cloud, Loader2, Sun, Moon, Download } from 'lucide-react';
+import { Zap, ChevronRight, Settings2, Activity, LogOut, Save, UserCircle, Check, Cloud, Loader2, Sun, Moon, Download, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 
 const localeLabels: Record<Locale, string> = { en: 'EN', fr: 'FR', es: 'ES' };
 const localeOrder: Locale[] = ['en', 'fr', 'es'];
@@ -183,7 +184,37 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
           <Download className="h-3 w-3" />
           <span className="hidden md:inline text-[10px] font-mono">Export</span>
         </button>
-        {/* API Settings */}
+
+        {/* Import JSON */}
+        <button
+          onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (!file) return;
+              try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                if (data.project) {
+                  useProjectStore.getState().importProject(data.project);
+                  toast.success('Project imported successfully');
+                } else {
+                  toast.error('Invalid project file');
+                }
+              } catch {
+                toast.error('Failed to parse JSON file');
+              }
+            };
+            input.click();
+          }}
+          className="flex items-center gap-1.5 rounded-md border border-border/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+          title="Import project from JSON"
+        >
+          <Upload className="h-3 w-3" />
+          <span className="hidden md:inline text-[10px] font-mono">Import</span>
+        </button>
         <button
           onClick={onOpenAPIPanel}
           className="flex items-center gap-1.5 rounded-md border border-border/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
