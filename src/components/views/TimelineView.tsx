@@ -1,14 +1,15 @@
 import { useProjectStore } from '@/store/useProjectStore';
-import { Play, Pause, SkipBack, ZoomIn, ZoomOut, Volume2, Film } from 'lucide-react';
-import { useRef, useEffect, useCallback } from 'react';
+import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, Maximize2 } from 'lucide-react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 
 export function TimelineView() {
-  const { timeline, setPlayhead, setZoom, togglePlay } = useProjectStore();
+  const { timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog } = useProjectStore();
   const rulerRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const pxPerSec = timeline.zoom;
-  const totalWidth = timeline.duration * pxPerSec;
+  const totalWidth = Math.max(timeline.duration * pxPerSec, 800);
 
   const drawRuler = useCallback(() => {
     const canvas = rulerRef.current;
@@ -18,51 +19,61 @@ export function TimelineView() {
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = totalWidth * dpr;
-    canvas.height = 32 * dpr;
+    canvas.height = 36 * dpr;
     canvas.style.width = `${totalWidth}px`;
-    canvas.style.height = '32px';
+    canvas.style.height = '36px';
     ctx.scale(dpr, dpr);
 
+    // Background
     ctx.fillStyle = 'hsl(222.2, 47.4%, 11.2%)';
-    ctx.fillRect(0, 0, totalWidth, 32);
+    ctx.fillRect(0, 0, totalWidth, 36);
 
-    // Draw ticks
+    // Draw sub-ticks, ticks, labels
     for (let sec = 0; sec <= timeline.duration; sec++) {
       const x = sec * pxPerSec;
       const isMajor = sec % 5 === 0;
-
-      ctx.beginPath();
-      ctx.strokeStyle = isMajor ? 'hsl(215, 20.2%, 45%)' : 'hsl(215, 25%, 27%)';
-      ctx.lineWidth = 1;
-      ctx.moveTo(x, isMajor ? 0 : 16);
-      ctx.lineTo(x, 32);
-      ctx.stroke();
+      const isMinor = sec % 1 === 0;
 
       if (isMajor) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'hsl(215, 20.2%, 40%)';
+        ctx.lineWidth = 1;
+        ctx.moveTo(x, 18);
+        ctx.lineTo(x, 36);
+        ctx.stroke();
+
         ctx.fillStyle = 'hsl(215, 20.2%, 65.1%)';
         ctx.font = '10px JetBrains Mono, monospace';
         ctx.textAlign = 'center';
         const m = Math.floor(sec / 60);
         const s = sec % 60;
-        ctx.fillText(`${m}:${s.toString().padStart(2, '0')}`, x, 12);
+        ctx.fillText(`${m}:${s.toString().padStart(2, '0')}`, x, 14);
+      } else if (isMinor && pxPerSec > 30) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'hsl(215, 25%, 22%)';
+        ctx.lineWidth = 0.5;
+        ctx.moveTo(x, 28);
+        ctx.lineTo(x, 36);
+        ctx.stroke();
       }
     }
 
-    // Draw playhead
+    // Playhead
     const px = timeline.playheadPosition * pxPerSec;
     ctx.beginPath();
     ctx.fillStyle = 'hsl(239, 84%, 67%)';
-    ctx.moveTo(px - 5, 0);
-    ctx.lineTo(px + 5, 0);
-    ctx.lineTo(px, 8);
+    ctx.moveTo(px - 6, 0);
+    ctx.lineTo(px + 6, 0);
+    ctx.lineTo(px + 3, 8);
+    ctx.lineTo(px - 3, 8);
     ctx.closePath();
     ctx.fill();
 
     ctx.beginPath();
     ctx.strokeStyle = 'hsl(239, 84%, 67%)';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.moveTo(px, 8);
-    ctx.lineTo(px, 32);
+    ctx.lineTo(px, 36);
     ctx.stroke();
   }, [pxPerSec, totalWidth, timeline.duration, timeline.playheadPosition]);
 
@@ -70,6 +81,7 @@ export function TimelineView() {
     drawRuler();
   }, [drawRuler]);
 
+  // Playback
   useEffect(() => {
     if (!timeline.isPlaying) return;
     const interval = setInterval(() => {
@@ -78,6 +90,22 @@ export function TimelineView() {
     return () => clearInterval(interval);
   }, [timeline.isPlaying, timeline.playheadPosition, timeline.duration, setPlayhead]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+      if (e.code === 'Home') setPlayhead(0);
+      if (e.code === 'End') setPlayhead(timeline.duration);
+      if (e.code === 'ArrowLeft') setPlayhead(Math.max(0, timeline.playheadPosition - 1));
+      if (e.code === 'ArrowRight') setPlayhead(Math.min(timeline.duration, timeline.playheadPosition + 1));
+      if (e.code === 'Equal' || e.code === 'NumpadAdd') setZoom(Math.min(120, timeline.zoom + 10));
+      if (e.code === 'Minus' || e.code === 'NumpadSubtract') setZoom(Math.max(20, timeline.zoom - 10));
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom]);
+
   const handleRulerClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = rulerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -85,49 +113,112 @@ export function TimelineView() {
     setPlayhead(Math.max(0, Math.min(x / pxPerSec, timeline.duration)));
   };
 
+  const handleRulerDrag = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging) return;
+    handleRulerClick(e);
+  };
+
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
-    const ms = Math.floor((sec % 1) * 100);
-    return `${m}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+    const f = Math.floor((sec % 1) * 30); // frames at 30fps
+    return `${m}:${s.toString().padStart(2, '0')}:${f.toString().padStart(2, '0')}`;
   };
+
+  const addSceneClips = () => {
+    let currentTime = 0;
+    scenes.forEach((scene) => {
+      addClip({ assetId: scene.id, track: 'video', startTime: currentTime, duration: scene.durationTargetSec });
+      addClip({ assetId: scene.id, track: 'audio', startTime: currentTime, duration: scene.durationTargetSec });
+      currentTime += scene.durationTargetSec;
+    });
+    addLog('success', `Added ${scenes.length} scenes to timeline`);
+  };
+
+  const tracks = [
+    { label: 'V1', fullLabel: 'Video', icon: Film, trackKey: 'video' as const, gradient: 'from-primary/30 to-primary/10', borderColor: 'border-primary/40' },
+    { label: 'A1', fullLabel: 'Audio', icon: Volume2, trackKey: 'audio' as const, gradient: 'from-success/30 to-success/10', borderColor: 'border-success/40' },
+  ];
 
   return (
     <div className="flex h-full flex-col">
       {/* Transport Controls */}
       <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setPlayhead(0)}
             className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            title="Go to start (Home)"
           >
             <SkipBack className="h-4 w-4" />
           </button>
           <button
             onClick={togglePlay}
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground transition-all hover:bg-primary/90 glow-primary"
+            className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground transition-all hover:bg-primary/90 glow-primary"
+            title="Play/Pause (Space)"
           >
             {timeline.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
           </button>
+          <button
+            onClick={() => setPlayhead(timeline.duration)}
+            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            title="Go to end (End)"
+          >
+            <SkipForward className="h-4 w-4" />
+          </button>
         </div>
 
-        <div className="font-mono text-sm text-primary tabular-nums">
-          {formatTime(timeline.playheadPosition)}
-          <span className="text-muted-foreground"> / {formatTime(timeline.duration)}</span>
+        {/* Timecode display */}
+        <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5">
+          <span className="font-mono text-sm text-primary tabular-nums tracking-wider">
+            {formatTime(timeline.playheadPosition)}
+          </span>
+          <span className="text-xs text-muted-foreground/50">/</span>
+          <span className="font-mono text-sm text-muted-foreground tabular-nums tracking-wider">
+            {formatTime(timeline.duration)}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
-          <input
-            type="range"
-            min={20}
-            max={120}
-            value={timeline.zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-border accent-primary"
-          />
-          <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex items-center gap-3">
+          {scenes.length > 0 && timeline.clips.length === 0 && (
+            <button
+              onClick={addSceneClips}
+              className="flex items-center gap-1.5 rounded-md border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/10"
+            >
+              <Plus className="h-3 w-3" />
+              Add Scenes to Timeline
+            </button>
+          )}
+
+          <div className="flex items-center gap-2">
+            <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="range"
+              min={20}
+              max={120}
+              value={timeline.zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="h-1 w-20 cursor-pointer appearance-none rounded-full bg-border accent-primary"
+            />
+            <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[10px] font-mono text-muted-foreground w-8">{timeline.zoom}px</span>
+          </div>
         </div>
+      </div>
+
+      {/* Keyboard shortcuts hint */}
+      <div className="flex items-center gap-4 border-b border-border bg-card/50 px-4 py-1">
+        {[
+          { key: 'Space', action: 'Play/Pause' },
+          { key: '←→', action: 'Seek ±1s' },
+          { key: '+−', action: 'Zoom' },
+          { key: 'Home', action: 'Start' },
+        ].map(({ key, action }) => (
+          <span key={key} className="text-[10px] text-muted-foreground/50">
+            <kbd className="rounded bg-border/50 px-1 py-0.5 font-mono text-[9px] text-muted-foreground">{key}</kbd>
+            {' '}{action}
+          </span>
+        ))}
       </div>
 
       {/* Timeline Area */}
@@ -137,48 +228,84 @@ export function TimelineView() {
           <canvas
             ref={rulerRef}
             onClick={handleRulerClick}
+            onMouseDown={() => setIsDragging(true)}
+            onMouseMove={handleRulerDrag}
+            onMouseUp={() => setIsDragging(false)}
+            onMouseLeave={() => setIsDragging(false)}
             className="cursor-pointer border-b border-border"
           />
 
           {/* Tracks */}
-          {[
-            { label: 'Video', icon: Film, color: 'bg-primary/20 border-primary/30' },
-            { label: 'Audio', icon: Volume2, color: 'bg-success/20 border-success/30' },
-          ].map(({ label, icon: Icon, color }) => (
-            <div key={label} className="flex border-b border-border">
-              <div className="flex w-24 shrink-0 items-center gap-2 border-r border-border bg-card px-3 py-4">
-                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-mono text-muted-foreground uppercase">{label}</span>
-              </div>
-              <div className="relative flex-1 bg-background/50 py-2 px-1" style={{ minHeight: 56 }}>
-                {/* Playhead line */}
-                <div
-                  className="absolute top-0 bottom-0 w-px bg-primary z-10"
-                  style={{ left: timeline.playheadPosition * pxPerSec }}
-                />
-                {/* Sample clips */}
-                {timeline.clips
-                  .filter((c) => c.track === label.toLowerCase())
-                  .map((clip) => (
-                    <div
-                      key={clip.id}
-                      className={`absolute top-2 bottom-2 rounded border ${color} flex items-center justify-center text-xs font-mono text-muted-foreground cursor-grab`}
-                      style={{
-                        left: clip.startTime * pxPerSec,
-                        width: clip.duration * pxPerSec,
-                      }}
-                    >
-                      {clip.duration}s
+          {tracks.map(({ label, fullLabel, icon: Icon, trackKey, gradient, borderColor }) => {
+            const trackClips = timeline.clips.filter((c) => c.track === trackKey);
+            return (
+              <div key={label} className="flex border-b border-border">
+                <div className="flex w-20 shrink-0 flex-col items-center justify-center border-r border-border bg-card py-4 gap-1">
+                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] font-mono text-muted-foreground font-bold">{label}</span>
+                </div>
+                <div className="relative flex-1 bg-background/30" style={{ minHeight: 64 }}>
+                  {/* Playhead line */}
+                  <div
+                    className="absolute top-0 bottom-0 w-px bg-primary/80 z-10 pointer-events-none"
+                    style={{ left: timeline.playheadPosition * pxPerSec }}
+                  />
+
+                  {/* Clips */}
+                  {trackClips.map((clip, idx) => {
+                    const scene = scenes.find((s) => s.id === clip.assetId);
+                    return (
+                      <div
+                        key={clip.id}
+                        className={`absolute top-1.5 bottom-1.5 rounded border ${borderColor} bg-gradient-to-r ${gradient} flex items-center px-2 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-lg hover:shadow-primary/10`}
+                        style={{
+                          left: clip.startTime * pxPerSec,
+                          width: clip.duration * pxPerSec,
+                        }}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-[10px] font-mono font-bold text-foreground/70 shrink-0">
+                            S{scene?.sceneNumber || idx + 1}
+                          </span>
+                          {clip.duration * pxPerSec > 80 && (
+                            <span className="text-[9px] font-mono text-muted-foreground truncate">
+                              {clip.duration}s
+                            </span>
+                          )}
+                        </div>
+                        {/* Waveform simulation for audio */}
+                        {trackKey === 'audio' && clip.duration * pxPerSec > 60 && (
+                          <div className="ml-2 flex items-center gap-px h-5 flex-1 overflow-hidden">
+                            {Array.from({ length: Math.floor(clip.duration * pxPerSec / 4) }).map((_, j) => (
+                              <div
+                                key={j}
+                                className="w-0.5 bg-success/40 rounded-full shrink-0"
+                                style={{ height: `${Math.random() * 100}%`, minHeight: 2 }}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {trackClips.length === 0 && (
+                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground/30 font-mono">
+                      {fullLabel} Track Empty
                     </div>
-                  ))}
-                {timeline.clips.filter((c) => c.track === label.toLowerCase()).length === 0 && (
-                  <div className="flex h-full items-center justify-center text-xs text-muted-foreground/40 font-mono">
-                    Drop {label.toLowerCase()} clips here
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
+            );
+          })}
+
+          {/* Extra empty track for expansion */}
+          <div className="flex border-b border-border/50">
+            <div className="flex w-20 shrink-0 items-center justify-center border-r border-border/50 bg-card/50 py-3">
+              <Plus className="h-3 w-3 text-muted-foreground/30" />
             </div>
-          ))}
+            <div className="flex-1 bg-background/10" style={{ minHeight: 40 }} />
+          </div>
         </div>
       </div>
     </div>
