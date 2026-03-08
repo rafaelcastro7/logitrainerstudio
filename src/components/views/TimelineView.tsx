@@ -22,7 +22,7 @@ interface ResizeState {
 const SNAP_THRESHOLD_PX = 8; // pixels within which snapping activates
 
 export function TimelineView() {
-  const { timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog, updateClip, removeClip, duplicateClip } = useProjectStore();
+  const { timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog, updateClip, removeClip, duplicateClip, selectedClipId, setSelectedClipId } = useProjectStore();
   const { t } = useI18n();
   const rulerRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +32,6 @@ export function TimelineView() {
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [resizePreview, setResizePreview] = useState<{ startTime: number; duration: number } | null>(null);
   const [snapLine, setSnapLine] = useState<number | null>(null);
-  const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; clipId: string } | null>(null);
 
   const pxPerSec = timeline.zoom;
