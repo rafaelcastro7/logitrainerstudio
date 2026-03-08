@@ -79,6 +79,8 @@ interface ProjectStore {
   togglePlay: () => void;
   addClip: (clip: Omit<TimelineClip, 'id'>) => void;
   updateClip: (id: string, updates: Partial<Omit<TimelineClip, 'id'>>) => void;
+  removeClip: (id: string) => void;
+  duplicateClip: (id: string) => void;
 
   logs: LogEntry[];
   addLog: (level: LogLevel, message: string) => void;
@@ -145,6 +147,19 @@ export const useProjectStore = create<ProjectStore>()(
       updateClip: (id, updates) => set((s) => {
         const idx = s.timeline.clips.findIndex((c) => c.id === id);
         if (idx !== -1) Object.assign(s.timeline.clips[idx], updates);
+      }),
+      removeClip: (id) => set((s) => {
+        s.timeline.clips = s.timeline.clips.filter((c) => c.id !== id);
+      }),
+      duplicateClip: (id) => set((s) => {
+        const clip = s.timeline.clips.find((c) => c.id === id);
+        if (clip) {
+          s.timeline.clips.push({
+            ...clip,
+            id: uuid(),
+            startTime: clip.startTime + clip.duration,
+          });
+        }
       }),
 
       logs: [] as LogEntry[],

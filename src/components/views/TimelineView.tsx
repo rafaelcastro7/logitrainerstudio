@@ -1,6 +1,6 @@
 import { useProjectStore, TimelineClip } from '@/store/useProjectStore';
 import { useI18n } from '@/i18n/useI18n';
-import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2, Copy, Trash2 } from 'lucide-react';
 import { useRef, useEffect, useCallback, useState } from 'react';
 
 type ResizeEdge = 'left' | 'right';
@@ -22,7 +22,7 @@ interface ResizeState {
 const SNAP_THRESHOLD_PX = 8; // pixels within which snapping activates
 
 export function TimelineView() {
-  const { timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog, updateClip } = useProjectStore();
+  const { timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog, updateClip, removeClip, duplicateClip } = useProjectStore();
   const { t } = useI18n();
   const rulerRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,6 +32,8 @@ export function TimelineView() {
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [resizePreview, setResizePreview] = useState<{ startTime: number; duration: number } | null>(null);
   const [snapLine, setSnapLine] = useState<number | null>(null);
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; clipId: string } | null>(null);
 
   const pxPerSec = timeline.zoom;
   const totalWidth = Math.max(timeline.duration * pxPerSec, 800);
@@ -161,10 +163,36 @@ export function TimelineView() {
       if (e.code === 'ArrowRight') setPlayhead(Math.min(timeline.duration, timeline.playheadPosition + 1));
       if (e.code === 'Equal' || e.code === 'NumpadAdd') setZoom(Math.min(120, timeline.zoom + 10));
       if (e.code === 'Minus' || e.code === 'NumpadSubtract') setZoom(Math.max(20, timeline.zoom - 10));
+      // Clip delete/duplicate
+      if (selectedClipId) {
+        if (e.code === 'Delete' || e.code === 'Backspace') {
+          e.preventDefault();
+          removeClip(selectedClipId);
+          addLog('info', 'Deleted clip');
+          setSelectedClipId(null);
+        }
+        if (e.key === 'd' && !e.metaKey && !e.ctrlKey) {
+          e.preventDefault();
+          duplicateClip(selectedClipId);
+          addLog('info', 'Duplicated clip');
+        }
+      }
+      if (e.code === 'Escape') {
+        setSelectedClipId(null);
+        setContextMenu(null);
+      }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom]);
+  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom, selectedClipId, removeClip, duplicateClip, addLog]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = () => setContextMenu(null);
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
+  }, [contextMenu]);
 
   // --- Clip drag ---
   const handleClipDragStart = (e: React.MouseEvent, clip: TimelineClip) => {
@@ -489,9 +517,16 @@ export function TimelineView() {
                     return (
                       <div
                         key={clip.id}
-                        className={`absolute top-1.5 bottom-1.5 rounded border ${isActive ? hoverBorder : borderColor} bg-gradient-to-r ${gradient} flex items-center select-none transition-shadow ${isActive ? 'shadow-lg shadow-primary/20 ring-1 ring-primary/30' : 'hover:shadow-lg hover:shadow-primary/10'} group`}
+                        className={`absolute top-1.5 bottom-1.5 rounded border ${isActive ? hoverBorder : selectedClipId === clip.id ? 'border-primary ring-1 ring-primary/40' : borderColor} bg-gradient-to-r ${gradient} flex items-center select-none transition-shadow ${isActive ? 'shadow-lg shadow-primary/20 ring-1 ring-primary/30' : 'hover:shadow-lg hover:shadow-primary/10'} group`}
                         style={style}
-                        onMouseDown={(e) => handleClipDragStart(e, clip)}
+                        onClick={(e) => { e.stopPropagation(); setSelectedClipId(clip.id); }}
+                        onMouseDown={(e) => { if (e.button === 0) handleClipDragStart(e, clip); }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedClipId(clip.id);
+                          setContextMenu({ x: e.clientX, y: e.clientY, clipId: clip.id });
+                        }}
                       >
                         {/* Left resize handle */}
                         <div
@@ -552,6 +587,41 @@ export function TimelineView() {
           </div>
         </div>
       </div>
+
+      {/* Context menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 w-44 rounded-lg border border-border bg-card/95 backdrop-blur-xl p-1 shadow-xl shadow-background/50"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
+            onClick={() => {
+              duplicateClip(contextMenu.clipId);
+              addLog('info', 'Duplicated clip');
+              setContextMenu(null);
+            }}
+          >
+            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+            Duplicate
+            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">D</kbd>
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            onClick={() => {
+              removeClip(contextMenu.clipId);
+              addLog('info', 'Deleted clip');
+              setSelectedClipId(null);
+              setContextMenu(null);
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">Del</kbd>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
