@@ -4,7 +4,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Locale } from '@/i18n/translations';
-import { Zap, ChevronRight, Settings2, Activity, LogOut, Save, UserCircle, Check, Cloud, Loader2, Sun, Moon } from 'lucide-react';
+import { Zap, ChevronRight, Settings2, Activity, LogOut, Save, UserCircle, Check, Cloud, Loader2, Sun, Moon, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -154,6 +154,35 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
           </button>
         )}
 
+        {/* Export JSON */}
+        <button
+          onClick={() => {
+            const state = useProjectStore.getState();
+            const exportData = {
+              version: '1.0',
+              exportedAt: new Date().toISOString(),
+              project: {
+                title: state.projectTitle,
+                brief: state.brief,
+                scenes: state.scenes,
+                timeline: state.timeline,
+                assets: state.assets,
+              },
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${state.projectTitle.replace(/\s+/g, '_').toLowerCase()}_export.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="flex items-center gap-1.5 rounded-md border border-border/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+          title="Export project as JSON"
+        >
+          <Download className="h-3 w-3" />
+          <span className="hidden md:inline text-[10px] font-mono">Export</span>
+        </button>
         {/* API Settings */}
         <button
           onClick={onOpenAPIPanel}
