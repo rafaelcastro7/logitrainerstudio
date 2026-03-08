@@ -233,6 +233,41 @@ export function TopBar({ onOpenAPIPanel, onSave, onOpenAdminPanel, onOpenMediaBr
           <Upload className="h-3 w-3" />
           <span className="hidden md:inline text-[10px] font-mono">Import</span>
         </button>
+        {/* Media Browser */}
+        {onOpenMediaBrowser && (
+          <button
+            onClick={onOpenMediaBrowser}
+            className="flex items-center gap-1.5 rounded-md border border-border/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+            title="Media Browser"
+          >
+            <FolderOpen className="h-3 w-3" />
+            <span className="hidden md:inline text-[10px] font-mono">Media</span>
+          </button>
+        )}
+
+        {/* Project Settings */}
+        {onOpenProjectSettings && (
+          <button
+            onClick={onOpenProjectSettings}
+            className="flex items-center gap-1.5 rounded-md border border-border/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+            title="Project Settings"
+          >
+            <Sliders className="h-3 w-3" />
+          </button>
+        )}
+
+        {/* Render / Export */}
+        {onOpenRenderExport && (
+          <button
+            onClick={onOpenRenderExport}
+            className="flex items-center gap-1.5 rounded-md border border-success/30 bg-success/5 px-2.5 py-1.5 text-xs font-bold text-success transition-all hover:bg-success/10"
+            title="Render & Export"
+          >
+            <Film className="h-3 w-3" />
+            <span className="hidden md:inline text-[10px] font-mono">Render</span>
+          </button>
+        )}
+
         <button
           onClick={onOpenAPIPanel}
           className="flex items-center gap-1.5 rounded-md border border-border/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
