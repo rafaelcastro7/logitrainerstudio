@@ -198,21 +198,42 @@ export function TimelineView() {
       if (trackAreaY < 64) track = 'video';
       else if (trackAreaY < 128) track = 'audio';
 
-      const newStartTime = Math.max(0, Math.min((x - dragState.offsetX) / pxPerSec, timeline.duration - 0.5));
-      setDragGhost({ x: newStartTime, y: e.clientY, track });
+      const rawTime = Math.max(0, Math.min((x - dragState.offsetX) / pxPerSec, timeline.duration - 0.5));
+      const clip = timeline.clips.find(c => c.id === dragState.clipId);
+      const clipDuration = clip?.duration || 1;
+
+      // Snap both left and right edges
+      const snapPoints = getSnapPoints(dragState.clipId, track);
+      const { snapped: leftSnap, didSnap: leftDid } = trySnap(rawTime, snapPoints);
+      const { snapped: rightSnap, didSnap: rightDid } = trySnap(rawTime + clipDuration, snapPoints);
+
+      let finalTime: number;
+      if (leftDid && rightDid) {
+        // Pick the closer snap
+        finalTime = Math.abs(rawTime - leftSnap) <= Math.abs((rawTime + clipDuration) - rightSnap) ? leftSnap : rightSnap - clipDuration;
+      } else if (leftDid) {
+        finalTime = leftSnap;
+      } else if (rightDid) {
+        finalTime = rightSnap - clipDuration;
+      } else {
+        finalTime = Math.round(rawTime * 4) / 4;
+      }
+
+      setSnapLine(leftDid || rightDid ? (leftDid ? finalTime : finalTime + clipDuration) : null);
+      setDragGhost({ x: Math.max(0, finalTime), y: e.clientY, track });
     };
 
     const handleMouseUp = () => {
       if (dragGhost && dragState) {
-        const snapped = Math.round(dragGhost.x * 4) / 4;
         updateClip(dragState.clipId, {
-          startTime: Math.max(0, snapped),
+          startTime: Math.max(0, dragGhost.x),
           track: dragGhost.track,
         });
-        addLog('info', `Moved clip to ${dragGhost.track.toUpperCase()} track at ${snapped.toFixed(2)}s`);
+        addLog('info', `Moved clip to ${dragGhost.track.toUpperCase()} track at ${dragGhost.x.toFixed(2)}s`);
       }
       setDragState(null);
       setDragGhost(null);
+      setSnapLine(null);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -221,7 +242,7 @@ export function TimelineView() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragState, dragGhost, pxPerSec, timeline.duration, updateClip, addLog]);
+  }, [dragState, dragGhost, pxPerSec, timeline.duration, timeline.clips, updateClip, addLog, getSnapPoints, trySnap]);
 
   // --- Clip resize ---
   const handleResizeStart = (e: React.MouseEvent, clip: TimelineClip, edge: ResizeEdge) => {
