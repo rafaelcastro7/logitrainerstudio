@@ -102,6 +102,16 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
           <Keyboard className="h-3.5 w-3.5" />
         </button>
 
+        {onSave && user && (
+          <button
+            onClick={onSave}
+            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+            title="Save Project"
+          >
+            <Save className="h-3.5 w-3.5" />
+          </button>
+        )}
+
         <button
           onClick={onOpenAPIPanel}
           className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
@@ -110,6 +120,16 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
           <Settings2 className="h-3.5 w-3.5" />
           API
         </button>
+
+        {user && (
+          <button
+            onClick={signOut}
+            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-destructive/30 hover:text-destructive"
+            title="Sign Out"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     </div>
   );
