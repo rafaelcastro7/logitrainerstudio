@@ -1,6 +1,6 @@
 import { useProjectStore, TimelineClip, TransitionType } from '@/store/useProjectStore';
 import { useI18n } from '@/i18n/useI18n';
-import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2, Copy, Trash2, Upload, Shuffle } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2, Copy, Trash2, Upload, Shuffle, Flag, Bookmark } from 'lucide-react';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { PreviewMonitor } from './PreviewMonitor';
 import { toast } from 'sonner';
