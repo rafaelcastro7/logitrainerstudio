@@ -88,7 +88,7 @@ const Index = () => {
     }
   }, [deleteProject, currentProjectId]);
 
-  if (loading) {
+  if (loading || approvalLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -97,6 +97,33 @@ const Index = () => {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Approval gate — admins bypass
+  if (!isAdmin && !isApproved) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md text-center p-8"
+        >
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-500/15 border border-yellow-500/20">
+            <Clock className="h-8 w-8 text-yellow-500" />
+          </div>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-3">Pending Approval</h2>
+          <p className="text-muted-foreground mb-6">
+            Your account is awaiting admin approval. You'll get access once an administrator reviews your registration.
+          </p>
+          <button
+            onClick={() => signOut()}
+            className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
+          >
+            Sign Out
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (showWelcome) {
     return (
