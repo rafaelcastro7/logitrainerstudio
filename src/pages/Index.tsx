@@ -18,6 +18,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
@@ -36,6 +37,8 @@ const Index = () => {
 
   // Smart alert engine — monitors API calls and triggers alerts
   useAlertEngine();
+  // Global undo/redo keyboard shortcuts
+  useUndoRedo();
 
   // Request browser notification permission on mount
   useEffect(() => {
