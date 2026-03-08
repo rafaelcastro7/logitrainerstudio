@@ -195,6 +195,10 @@ const Index = () => {
         {showAPIPanel && <APIManagementPanel onClose={() => setShowAPIPanel(false)} />}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showAdminPanel && <AdminApprovalPanel onClose={() => setShowAdminPanel(false)} />}
+      </AnimatePresence>
+
       <OnboardingTour />
     </>
   );
