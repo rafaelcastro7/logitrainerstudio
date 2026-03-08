@@ -112,6 +112,121 @@ export const translations = {
   'common.audio': { en: 'Audio', fr: 'Audio', es: 'Audio' },
   'common.video': { en: 'Video', fr: 'Vidéo', es: 'Video' },
   'common.generating': { en: 'Generating...', fr: 'Génération...', es: 'Generando...' },
+
+  // ─── About Page ──────────────────────────────────────────────────
+  'about.back': { en: '← Back to Studio', fr: '← Retour au Studio', es: '← Volver al Estudio' },
+  'about.label': { en: 'About the Platform', fr: 'À Propos de la Plateforme', es: 'Acerca de la Plataforma' },
+  'about.hero.desc': {
+    en: 'A next-generation AI-powered video production IDE that transforms creative briefs into fully produced video content through intelligent scene decomposition, multi-modal asset generation, and professional timeline editing.',
+    fr: 'Un IDE de production vidéo de nouvelle génération propulsé par l\'IA qui transforme les briefs créatifs en contenu vidéo complet grâce à la décomposition intelligente de scènes, la génération d\'assets multi-modaux et l\'édition professionnelle sur timeline.',
+    es: 'Un IDE de producción de video de nueva generación impulsado por IA que transforma briefings creativos en contenido de video completo mediante descomposición inteligente de escenas, generación de assets multimodal y edición profesional en línea de tiempo.',
+  },
+  'about.stat.models': { en: 'AI Models', fr: 'Modèles IA', es: 'Modelos IA' },
+  'about.stat.providers': { en: 'Providers', fr: 'Fournisseurs', es: 'Proveedores' },
+  'about.stat.languages': { en: 'Languages', fr: 'Langues', es: 'Idiomas' },
+  'about.stat.possibilities': { en: 'Possibilities', fr: 'Possibilités', es: 'Posibilidades' },
+
+  'about.what.label': { en: 'The Vision', fr: 'La Vision', es: 'La Visión' },
+  'about.what.title': {
+    en: 'From Brief to Final Cut — All in One IDE',
+    fr: 'Du Brief au Montage Final — Tout en Un IDE',
+    es: 'Del Brief al Corte Final — Todo en Un IDE',
+  },
+  'about.what.p1': {
+    en: 'LogiTrainer AI Studio reimagines the video production pipeline. Instead of juggling multiple tools for scripting, image generation, voiceover, and editing, everything lives in a single, purpose-built environment. Write a brief, and the AI Architect decomposes it into production-ready scenes with visual prompts and voiceover scripts.',
+    fr: 'LogiTrainer AI Studio réinvente le pipeline de production vidéo. Au lieu de jongler entre plusieurs outils pour le scripting, la génération d\'images, la voix off et le montage, tout vit dans un seul environnement dédié. Écrivez un brief, et l\'Architecte IA le décompose en scènes prêtes à produire avec des prompts visuels et des scripts de voix off.',
+    es: 'LogiTrainer AI Studio reimagina el pipeline de producción de video. En lugar de hacer malabares con múltiples herramientas para guión, generación de imágenes, narración y edición, todo vive en un único entorno dedicado. Escriba un brief, y el Arquitecto IA lo descompone en escenas listas para producción con prompts visuales y guiones de narración.',
+  },
+  'about.what.p2': {
+    en: 'The Asset Studio then generates images, audio, and video for each scene using state-of-the-art AI models from Google and OpenAI. Finally, the Timeline Editor lets you arrange, trim, and compose your final production with frame-accurate precision.',
+    fr: 'Le Studio d\'Assets génère ensuite images, audio et vidéo pour chaque scène en utilisant des modèles IA de pointe de Google et OpenAI. Enfin, l\'Éditeur de Timeline vous permet d\'organiser, couper et composer votre production finale avec une précision à l\'image près.',
+    es: 'El Estudio de Assets luego genera imágenes, audio y video para cada escena usando modelos de IA de última generación de Google y OpenAI. Finalmente, el Editor de Timeline le permite organizar, recortar y componer su producción final con precisión de fotograma.',
+  },
+
+  'about.modules.label': { en: 'Core Modules', fr: 'Modules Principaux', es: 'Módulos Principales' },
+  'about.modules.title': { en: 'Six Integrated Modules', fr: 'Six Modules Intégrés', es: 'Seis Módulos Integrados' },
+  'about.module.architect': { en: 'Script Architect', fr: 'Architecte de Script', es: 'Arquitecto de Guión' },
+  'about.module.architect.desc': {
+    en: 'AI-powered scene decomposition. Enter a creative brief and get a structured, multi-scene script with visual prompts, voiceover text, and timing.',
+    fr: 'Décomposition de scènes par IA. Entrez un brief créatif et obtenez un script structuré multi-scènes avec prompts visuels, texte de voix off et timing.',
+    es: 'Descomposición de escenas por IA. Ingrese un brief creativo y obtenga un guión estructurado multi-escena con prompts visuales, texto de narración y temporización.',
+  },
+  'about.module.studio': { en: 'Asset Studio', fr: 'Studio d\'Assets', es: 'Estudio de Assets' },
+  'about.module.studio.desc': {
+    en: 'Generate images, audio narration, and video clips for each scene. Batch generation with real-time progress tracking and error recovery.',
+    fr: 'Générez images, narration audio et clips vidéo pour chaque scène. Génération par lots avec suivi en temps réel et récupération d\'erreurs.',
+    es: 'Genere imágenes, narración de audio y clips de video para cada escena. Generación por lotes con seguimiento en tiempo real y recuperación de errores.',
+  },
+  'about.module.timeline': { en: 'Timeline Editor', fr: 'Éditeur de Timeline', es: 'Editor de Timeline' },
+  'about.module.timeline.desc': {
+    en: 'Canvas-based multi-track editor with frame-accurate playhead, keyboard shortcuts, zoom control, and waveform visualization.',
+    fr: 'Éditeur multi-piste canvas avec curseur précis à l\'image, raccourcis clavier, contrôle de zoom et visualisation de forme d\'onde.',
+    es: 'Editor multi-pista basado en canvas con cabezal preciso al fotograma, atajos de teclado, control de zoom y visualización de forma de onda.',
+  },
+  'about.module.assistant': { en: 'Neural Assistant', fr: 'Assistant Neuronal', es: 'Asistente Neural' },
+  'about.module.assistant.desc': {
+    en: 'AI copilot with streaming chat, markdown rendering, and creative guidance for script refinement, prompt engineering, and production decisions.',
+    fr: 'Copilote IA avec chat en streaming, rendu markdown et guidance créative pour le raffinement de script, l\'ingénierie de prompt et les décisions de production.',
+    es: 'Copiloto IA con chat en streaming, renderizado markdown y guía creativa para refinamiento de guión, ingeniería de prompts y decisiones de producción.',
+  },
+  'about.module.imagelab': { en: 'Image Lab', fr: 'Labo Image', es: 'Lab de Imagen' },
+  'about.module.imagelab.desc': {
+    en: 'Advanced image editing and analysis. Edit generated images with text prompts and analyze composition, lighting, and color palette with AI vision.',
+    fr: 'Édition et analyse d\'images avancées. Éditez les images générées avec des prompts texte et analysez composition, éclairage et palette avec la vision IA.',
+    es: 'Edición y análisis avanzado de imágenes. Edite imágenes generadas con prompts de texto y analice composición, iluminación y paleta de colores con visión IA.',
+  },
+  'about.module.api': { en: 'API Management', fr: 'Gestion des API', es: 'Gestión de APIs' },
+  'about.module.api.desc': {
+    en: 'Multi-provider model selection with performance dashboards, latency tracking, call logs, and per-task model configuration.',
+    fr: 'Sélection de modèles multi-fournisseurs avec tableaux de performance, suivi de latence, journaux d\'appels et configuration par tâche.',
+    es: 'Selección de modelos multi-proveedor con dashboards de rendimiento, seguimiento de latencia, registros de llamadas y configuración por tarea.',
+  },
+
+  'about.ai.label': { en: 'AI Infrastructure', fr: 'Infrastructure IA', es: 'Infraestructura IA' },
+  'about.ai.title': { en: 'Multi-Provider AI Engine', fr: 'Moteur IA Multi-Fournisseur', es: 'Motor IA Multi-Proveedor' },
+  'about.ai.desc': {
+    en: 'Choose the best model for each task. Switch providers instantly with zero configuration.',
+    fr: 'Choisissez le meilleur modèle pour chaque tâche. Changez de fournisseur instantanément sans configuration.',
+    es: 'Elija el mejor modelo para cada tarea. Cambie de proveedor instantáneamente sin configuración.',
+  },
+
+  'about.tech.label': { en: 'Technology', fr: 'Technologie', es: 'Tecnología' },
+  'about.tech.title': { en: 'Built on Modern Standards', fr: 'Construit sur des Standards Modernes', es: 'Construido sobre Estándares Modernos' },
+
+  'about.cap.label': { en: 'Capabilities', fr: 'Capacités', es: 'Capacidades' },
+  'about.cap.title': { en: 'What You Can Create', fr: 'Ce Que Vous Pouvez Créer', es: 'Lo Que Puede Crear' },
+  'about.cap.1.title': { en: 'Cinematic Visuals', fr: 'Visuels Cinématiques', es: 'Visuales Cinematográficos' },
+  'about.cap.1.desc': {
+    en: 'Generate photorealistic and stylized images for each scene with customizable aspect ratios, styles, and AI-powered editing.',
+    fr: 'Générez des images photoréalistes et stylisées pour chaque scène avec des ratios, styles et édition IA personnalisables.',
+    es: 'Genere imágenes fotorrealistas y estilizadas para cada escena con relaciones de aspecto, estilos y edición IA personalizables.',
+  },
+  'about.cap.2.title': { en: 'AI Voiceover & Audio', fr: 'Voix Off & Audio IA', es: 'Narración y Audio IA' },
+  'about.cap.2.desc': {
+    en: 'Text-to-speech narration with multiple voice options. Professional audio generation synced to your scene timing.',
+    fr: 'Narration text-to-speech avec options de voix multiples. Génération audio professionnelle synchronisée au timing de vos scènes.',
+    es: 'Narración text-to-speech con múltiples opciones de voz. Generación de audio profesional sincronizada con el timing de sus escenas.',
+  },
+  'about.cap.3.title': { en: 'Professional Editing', fr: 'Montage Professionnel', es: 'Edición Profesional' },
+  'about.cap.3.desc': {
+    en: 'Multi-track timeline with drag, zoom, keyboard shortcuts, and frame-accurate playback. Compose your final production with precision.',
+    fr: 'Timeline multi-piste avec glisser, zoom, raccourcis clavier et lecture précise à l\'image. Composez votre production finale avec précision.',
+    es: 'Timeline multi-pista con arrastre, zoom, atajos de teclado y reproducción precisa al fotograma. Componga su producción final con precisión.',
+  },
+  'about.cap.4.title': { en: 'Multilingual Interface', fr: 'Interface Multilingue', es: 'Interfaz Multilingüe' },
+  'about.cap.4.desc': {
+    en: 'Full English, French, and Spanish support across the entire interface. Auto-detects your browser language on first visit.',
+    fr: 'Support complet anglais, français et espagnol sur toute l\'interface. Détection automatique de la langue de votre navigateur.',
+    es: 'Soporte completo en inglés, francés y español en toda la interfaz. Detecta automáticamente el idioma de su navegador.',
+  },
+
+  'about.cta.title': { en: 'Ready to Create?', fr: 'Prêt à Créer ?', es: '¿Listo para Crear?' },
+  'about.cta.desc': {
+    en: 'Start your next video production with the most advanced AI-powered creative IDE available.',
+    fr: 'Commencez votre prochaine production vidéo avec l\'IDE créatif propulsé par IA le plus avancé disponible.',
+    es: 'Comience su próxima producción de video con el IDE creativo más avanzado impulsado por IA disponible.',
+  },
+  'about.cta.btn': { en: 'Launch Studio', fr: 'Lancer le Studio', es: 'Abrir Estudio' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

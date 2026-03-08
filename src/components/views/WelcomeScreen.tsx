@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Activity, Sparkles, ArrowRight, Zap, Film, Clock, Cpu } from 'lucide-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/store/useProjectStore';
@@ -109,14 +110,17 @@ export function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </motion.button>
 
-            <motion.p
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.3 }}
-              className="mt-4 text-xs font-mono text-muted-foreground/50"
+              className="mt-4 flex items-center gap-4"
             >
-              {t('app.version')}
-            </motion.p>
+              <Link to="/about" className="text-xs font-mono text-muted-foreground/50 hover:text-primary transition-colors underline underline-offset-4">
+                About
+              </Link>
+              <span className="text-xs font-mono text-muted-foreground/50">{t('app.version')}</span>
+            </motion.div>
           </motion.div>
         ) : (
           <motion.div
