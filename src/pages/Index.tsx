@@ -11,7 +11,8 @@ import { LogConsole } from '@/components/panels/LogConsole';
 import { WelcomeScreen } from '@/components/views/WelcomeScreen';
 import { ImageLab } from '@/components/views/ImageLab';
 import { APIManagementPanel } from '@/components/panels/APIManagementPanel';
-import { AnimatePresence } from 'framer-motion';
+import { AlertsPanel } from '@/components/panels/AlertsPanel';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -23,6 +24,7 @@ const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [imageLabSceneId, setImageLabSceneId] = useState<string | null>(null);
   const [showAPIPanel, setShowAPIPanel] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
 
