@@ -1,6 +1,7 @@
 import { useProjectStore } from '@/store/useProjectStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/hooks/useProjects';
+import { useApproval } from '@/hooks/useApproval';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { ArchitectView } from '@/components/views/ArchitectView';
@@ -15,23 +16,26 @@ import { ImageLab } from '@/components/views/ImageLab';
 import { APIManagementPanel } from '@/components/panels/APIManagementPanel';
 import { AlertsPanel } from '@/components/panels/AlertsPanel';
 import { ClipPropertiesPanel } from '@/components/panels/ClipPropertiesPanel';
+import { AdminApprovalPanel } from '@/components/panels/AdminApprovalPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { Navigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield, Clock } from 'lucide-react';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const { isApproved, isAdmin, loading: approvalLoading } = useApproval();
   const { currentView, isChatOpen, scenes, selectedClipId, selectedTransitionId } = useProjectStore();
   const { saveProject, listProjects, loadProject, deleteProject } = useProjects();
   const [showWelcome, setShowWelcome] = useState(true);
   const [imageLabSceneId, setImageLabSceneId] = useState<string | null>(null);
   const [showAPIPanel, setShowAPIPanel] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
 
@@ -85,7 +89,7 @@ const Index = () => {
     }
   }, [deleteProject, currentProjectId]);
 
-  if (loading) {
+  if (loading || approvalLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -94,6 +98,33 @@ const Index = () => {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Approval gate — admins bypass
+  if (!isAdmin && !isApproved) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md text-center p-8"
+        >
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-500/15 border border-yellow-500/20">
+            <Clock className="h-8 w-8 text-yellow-500" />
+          </div>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-3">Pending Approval</h2>
+          <p className="text-muted-foreground mb-6">
+            Your account is awaiting admin approval. You'll get access once an administrator reviews your registration.
+          </p>
+          <button
+            onClick={() => signOut()}
+            className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
+          >
+            Sign Out
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (showWelcome) {
     return (
@@ -125,7 +156,7 @@ const Index = () => {
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         <AppSidebar onToggleAlerts={() => setShowAlerts(!showAlerts)} isAlertsOpen={showAlerts} />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <TopBar onOpenAPIPanel={() => setShowAPIPanel(true)} onSave={handleSave} />
+          <TopBar onOpenAPIPanel={() => setShowAPIPanel(true)} onSave={handleSave} onOpenAdminPanel={isAdmin ? () => setShowAdminPanel(true) : undefined} />
           <div className="flex flex-1 overflow-hidden">
             <div className="flex flex-1 flex-col overflow-hidden">
               <div className="flex-1 overflow-hidden">
@@ -162,6 +193,10 @@ const Index = () => {
 
       <AnimatePresence>
         {showAPIPanel && <APIManagementPanel onClose={() => setShowAPIPanel(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAdminPanel && <AdminApprovalPanel onClose={() => setShowAdminPanel(false)} />}
       </AnimatePresence>
 
       <OnboardingTour />

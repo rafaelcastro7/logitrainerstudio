@@ -4,7 +4,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Locale } from '@/i18n/translations';
-import { Zap, ChevronRight, Settings2, Activity, LogOut, Save, UserCircle, Check, Cloud, Loader2, Sun, Moon, Download, Upload } from 'lucide-react';
+import { Zap, ChevronRight, Settings2, Activity, LogOut, Save, UserCircle, Check, Cloud, Loader2, Sun, Moon, Download, Upload, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 const localeLabels: Record<Locale, string> = { en: 'EN', fr: 'FR', es: 'ES' };
 const localeOrder: Locale[] = ['en', 'fr', 'es'];
 
-export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void; onSave?: () => void }) {
+export function TopBar({ onOpenAPIPanel, onSave, onOpenAdminPanel }: { onOpenAPIPanel: () => void; onSave?: () => void; onOpenAdminPanel?: () => void }) {
   const { projectTitle, currentView, scenes } = useProjectStore();
   const { totalCalls, avgLatency } = useAPIStore();
   const { t, locale, setLocale } = useI18n();
@@ -105,6 +105,17 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
         >
           <span>⌘K</span>
         </div>
+
+        {/* Admin panel */}
+        {onOpenAdminPanel && (
+          <button
+            onClick={onOpenAdminPanel}
+            className="flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-[10px] font-bold text-primary transition-all hover:bg-primary/20"
+          >
+            <Shield className="h-3 w-3" />
+            Admin
+          </button>
+        )}
 
         {/* Theme toggle */}
         <button
