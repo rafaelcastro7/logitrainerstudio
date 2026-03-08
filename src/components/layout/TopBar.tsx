@@ -96,6 +96,13 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
           )}
         </div>
 
+        {/* Command Palette hint */}
+        <div className="hidden md:flex items-center gap-1 rounded-md border border-border/50 px-2.5 py-1.5 text-[10px] text-muted-foreground/40 font-mono cursor-pointer hover:border-primary/30 hover:text-muted-foreground transition-all"
+          onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+        >
+          <span>⌘K</span>
+        </div>
+
         {/* Language switcher */}
         <div className="flex items-center rounded-md border border-border/50 overflow-hidden">
           {localeOrder.map((l) => (
