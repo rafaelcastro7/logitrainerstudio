@@ -517,9 +517,16 @@ export function TimelineView() {
                     return (
                       <div
                         key={clip.id}
-                        className={`absolute top-1.5 bottom-1.5 rounded border ${isActive ? hoverBorder : borderColor} bg-gradient-to-r ${gradient} flex items-center select-none transition-shadow ${isActive ? 'shadow-lg shadow-primary/20 ring-1 ring-primary/30' : 'hover:shadow-lg hover:shadow-primary/10'} group`}
+                        className={`absolute top-1.5 bottom-1.5 rounded border ${isActive ? hoverBorder : selectedClipId === clip.id ? 'border-primary ring-1 ring-primary/40' : borderColor} bg-gradient-to-r ${gradient} flex items-center select-none transition-shadow ${isActive ? 'shadow-lg shadow-primary/20 ring-1 ring-primary/30' : 'hover:shadow-lg hover:shadow-primary/10'} group`}
                         style={style}
-                        onMouseDown={(e) => handleClipDragStart(e, clip)}
+                        onClick={(e) => { e.stopPropagation(); setSelectedClipId(clip.id); }}
+                        onMouseDown={(e) => { if (e.button === 0) handleClipDragStart(e, clip); }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedClipId(clip.id);
+                          setContextMenu({ x: e.clientX, y: e.clientY, clipId: clip.id });
+                        }}
                       >
                         {/* Left resize handle */}
                         <div
