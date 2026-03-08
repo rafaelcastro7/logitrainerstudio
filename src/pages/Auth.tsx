@@ -52,7 +52,8 @@ export default function Auth() {
       } else if (mode === 'signup') {
         const { error } = await signUp(email, password, displayName);
         if (error) throw error;
-        toast.success('Account created! You can now sign in.');
+        toast.success('Account created! Pending admin approval.');
+        setMode('login');
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
