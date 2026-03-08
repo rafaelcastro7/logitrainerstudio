@@ -110,6 +110,7 @@ const Index = () => {
 
   return (
     <>
+      <CommandPalette />
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         <AppSidebar onToggleAlerts={() => setShowAlerts(!showAlerts)} isAlertsOpen={showAlerts} />
         <div className="flex flex-1 flex-col overflow-hidden">

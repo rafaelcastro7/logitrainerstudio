@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { v4 as uuid } from 'uuid';
 
-export type ViewMode = 'architect' | 'studio' | 'timeline';
+export type ViewMode = 'architect' | 'studio' | 'timeline' | 'dashboard';
 export type AssetType = 'image' | 'audio' | 'video';
 export type AssetStatus = 'idle' | 'generating' | 'ready' | 'error';
 export type LogLevel = 'info' | 'success' | 'error' | 'warning';
