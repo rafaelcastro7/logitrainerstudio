@@ -18,6 +18,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
