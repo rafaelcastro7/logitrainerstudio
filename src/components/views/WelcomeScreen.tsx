@@ -117,7 +117,7 @@ export function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
               className="mt-4 flex items-center gap-4"
             >
               <Link to="/about" className="text-xs font-mono text-muted-foreground/50 hover:text-primary transition-colors underline underline-offset-4">
-                About
+                {t('welcome.about')}
               </Link>
               <span className="text-xs font-mono text-muted-foreground/50">{t('app.version')}</span>
             </motion.div>

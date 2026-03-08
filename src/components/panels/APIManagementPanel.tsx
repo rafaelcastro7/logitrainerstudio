@@ -14,19 +14,20 @@ import {
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { TranslationKey } from '@/i18n/translations';
 
 const taskConfig: {
   key: keyof ModelPreferences;
-  label: string;
+  labelKey: TranslationKey;
+  descKey: TranslationKey;
   icon: typeof Sparkles;
   capability: string;
-  description: string;
 }[] = [
-  { key: 'scriptGeneration', label: 'Script Generation', icon: Sparkles, capability: 'text', description: 'AI model for generating video scripts from briefs' },
-  { key: 'chatAssistant', label: 'Chat Assistant', icon: MessageSquare, capability: 'text', description: 'Neural Assistant conversation model' },
-  { key: 'imageGeneration', label: 'Image Generation', icon: Image, capability: 'image-gen', description: 'Model for creating scene visuals' },
-  { key: 'imageAnalysis', label: 'Image Analysis', icon: Eye, capability: 'image-analysis', description: 'Composition & lighting analysis' },
-  { key: 'imageEdit', label: 'Image Editing', icon: Wand2, capability: 'image-gen', description: 'Edit existing images with AI' },
+  { key: 'scriptGeneration', labelKey: 'api.task.scriptGeneration', descKey: 'api.task.scriptGeneration.desc', icon: Sparkles, capability: 'text' },
+  { key: 'chatAssistant', labelKey: 'api.task.chatAssistant', descKey: 'api.task.chatAssistant.desc', icon: MessageSquare, capability: 'text' },
+  { key: 'imageGeneration', labelKey: 'api.task.imageGeneration', descKey: 'api.task.imageGeneration.desc', icon: Image, capability: 'image-gen' },
+  { key: 'imageAnalysis', labelKey: 'api.task.imageAnalysis', descKey: 'api.task.imageAnalysis.desc', icon: Eye, capability: 'image-analysis' },
+  { key: 'imageEdit', labelKey: 'api.task.imageEdit', descKey: 'api.task.imageEdit.desc', icon: Wand2, capability: 'image-gen' },
 ];
 
 const speedBadge = (speed: string) => {
@@ -123,7 +124,7 @@ export function APIManagementPanel({ onClose }: { onClose: () => void }) {
                 </button>
               </div>
 
-              {taskConfig.map(({ key, label, icon: Icon, capability, description }) => {
+              {taskConfig.map(({ key, labelKey, descKey, icon: Icon, capability }) => {
                 const availableModels = getModelsWithCapability(capability as any);
                 const currentModel = getModelById(preferences[key]);
                 return (
@@ -132,8 +133,8 @@ export function APIManagementPanel({ onClose }: { onClose: () => void }) {
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4 text-primary" />
                         <div>
-                          <h4 className="text-sm font-medium text-foreground">{label}</h4>
-                          <p className="text-xs text-muted-foreground">{description}</p>
+                          <h4 className="text-sm font-medium text-foreground">{t(labelKey)}</h4>
+                          <p className="text-xs text-muted-foreground">{t(descKey)}</p>
                         </div>
                       </div>
                       {currentModel && (
