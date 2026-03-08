@@ -8,10 +8,11 @@ import { Zap, ChevronRight, Settings2, Activity, Keyboard, LogOut, Save } from '
 const localeLabels: Record<Locale, string> = { en: 'EN', fr: 'FR', es: 'ES' };
 const localeOrder: Locale[] = ['en', 'fr', 'es'];
 
-export function TopBar({ onOpenAPIPanel }: { onOpenAPIPanel: () => void }) {
+export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void; onSave?: () => void }) {
   const { projectTitle, currentView, scenes } = useProjectStore();
   const { totalCalls, avgLatency } = useAPIStore();
   const { t, locale, setLocale } = useI18n();
+  const { user, signOut } = useAuth();
 
   const viewLabels: Record<string, string> = {
     architect: t('nav.architect'),
