@@ -148,8 +148,20 @@ export const useProjectStore = create<ProjectStore>()(
         const idx = s.timeline.clips.findIndex((c) => c.id === id);
         if (idx !== -1) Object.assign(s.timeline.clips[idx], updates);
       }),
+      removeClip: (id) => set((s) => {
+        s.timeline.clips = s.timeline.clips.filter((c) => c.id !== id);
+      }),
+      duplicateClip: (id) => set((s) => {
+        const clip = s.timeline.clips.find((c) => c.id === id);
+        if (clip) {
+          s.timeline.clips.push({
+            ...clip,
+            id: uuid(),
+            startTime: clip.startTime + clip.duration,
+          });
+        }
+      }),
 
-      logs: [] as LogEntry[],
       addLog: (level, message) =>
         set((s) => {
           s.logs.unshift({ id: uuid(), level, message, timestamp: new Date() });
