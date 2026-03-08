@@ -114,6 +114,19 @@ const Index = () => {
               <LogConsole />
             </div>
             <AnimatePresence>
+              {showAlerts && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 340, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  className="h-full border-l border-border bg-card/50 overflow-hidden"
+                >
+                  <AlertsPanel />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
               {isChatOpen && <ChatPanel />}
             </AnimatePresence>
           </div>
