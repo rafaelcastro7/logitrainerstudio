@@ -62,6 +62,32 @@ export function AppSidebar({ onToggleAlerts, isAlertsOpen }: { onToggleAlerts?: 
         })}
       </nav>
 
+      {/* Alerts button */}
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger asChild>
+          <button
+            onClick={onToggleAlerts}
+            className={cn(
+              'relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200',
+              isAlertsOpen
+                ? 'bg-warning/15 text-warning'
+                : 'text-muted-foreground/60 hover:bg-secondary/50 hover:text-foreground'
+            )}
+          >
+            <Bell className="h-[18px] w-[18px]" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="font-display">
+          <p className="font-semibold">Alertas</p>
+          <p className="text-[10px] text-muted-foreground">Monitoreo inteligente de APIs</p>
+        </TooltipContent>
+      </Tooltip>
+
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
           <button
