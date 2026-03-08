@@ -103,7 +103,7 @@ const Index = () => {
   return (
     <>
       <div className="flex h-screen w-screen overflow-hidden bg-background">
-        <AppSidebar />
+        <AppSidebar onToggleAlerts={() => setShowAlerts(!showAlerts)} isAlertsOpen={showAlerts} />
         <div className="flex flex-1 flex-col overflow-hidden">
           <TopBar onOpenAPIPanel={() => setShowAPIPanel(true)} onSave={handleSave} />
           <div className="flex flex-1 overflow-hidden">
