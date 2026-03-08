@@ -212,6 +212,14 @@ export function TimelineView() {
         setSelectedTransitionId(null);
         addLog('info', 'Removed transition');
       }
+      // M = add marker at playhead
+      if (e.key === 'm' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        const colors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+        addMarker({ time: timeline.playheadPosition, label: `Marker`, color: colors[timeline.markers.length % colors.length] });
+        addLog('info', `Marker added at ${timeline.playheadPosition.toFixed(1)}s`);
+        toast.success('Marker added');
+      }
       if (e.code === 'Escape') {
         setSelectedClipId(null);
         setSelectedTransitionId(null);
@@ -221,7 +229,7 @@ export function TimelineView() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom, selectedClipId, selectedTransitionId, removeClip, duplicateClip, addLog, addTransition, removeTransition, timeline.clips]);
+  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom, selectedClipId, selectedTransitionId, removeClip, duplicateClip, addLog, addTransition, removeTransition, timeline.clips, timeline.markers, addMarker]);
 
   // Close menus on outside click
   useEffect(() => {
