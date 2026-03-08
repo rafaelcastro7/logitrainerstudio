@@ -79,6 +79,8 @@ interface ProjectStore {
   togglePlay: () => void;
   addClip: (clip: Omit<TimelineClip, 'id'>) => void;
   updateClip: (id: string, updates: Partial<Omit<TimelineClip, 'id'>>) => void;
+  removeClip: (id: string) => void;
+  duplicateClip: (id: string) => void;
 
   logs: LogEntry[];
   addLog: (level: LogLevel, message: string) => void;
