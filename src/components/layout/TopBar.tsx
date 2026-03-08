@@ -3,7 +3,8 @@ import { useAPIStore } from '@/store/useAPIStore';
 import { useI18n } from '@/i18n/useI18n';
 import { useAuth } from '@/hooks/useAuth';
 import { Locale } from '@/i18n/translations';
-import { Zap, ChevronRight, Settings2, Activity, Keyboard, LogOut, Save } from 'lucide-react';
+import { Zap, ChevronRight, Settings2, Activity, Keyboard, LogOut, Save, UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const localeLabels: Record<Locale, string> = { en: 'EN', fr: 'FR', es: 'ES' };
 const localeOrder: Locale[] = ['en', 'fr', 'es'];
