@@ -34,6 +34,7 @@ export const translations = {
   'welcome.placeholder': { en: 'e.g. Cyberpunk Coffee Ad', fr: 'ex. Pub Café Cyberpunk', es: 'ej. Anuncio Café Cyberpunk' },
   'welcome.back': { en: 'Back', fr: 'Retour', es: 'Volver' },
   'welcome.create': { en: 'Create & Enter', fr: 'Créer & Entrer', es: 'Crear & Entrar' },
+  'welcome.about': { en: 'About', fr: 'À Propos', es: 'Acerca de' },
 
   // ─── Architect ───────────────────────────────────────────────────
   'architect.title': { en: 'Script Architect', fr: 'Architecte de Script', es: 'Arquitecto de Guión' },
@@ -102,6 +103,18 @@ export const translations = {
   'api.nocalls': { en: 'No API calls yet. Start generating to see logs here.', fr: 'Pas d\'appels API. Commencez à générer pour voir les logs.', es: 'Sin llamadas API. Comience a generar para ver registros.' },
   'api.logged': { en: 'API calls logged', fr: 'appels API enregistrés', es: 'llamadas API registradas' },
 
+  // ─── API Task Labels (for API Management Panel) ───────────────
+  'api.task.scriptGeneration': { en: 'Script Generation', fr: 'Génération de Script', es: 'Generación de Guión' },
+  'api.task.scriptGeneration.desc': { en: 'AI model for generating video scripts from briefs', fr: 'Modèle IA pour générer des scripts vidéo à partir de briefs', es: 'Modelo IA para generar guiones de video desde briefs' },
+  'api.task.chatAssistant': { en: 'Chat Assistant', fr: 'Assistant Chat', es: 'Asistente de Chat' },
+  'api.task.chatAssistant.desc': { en: 'Neural Assistant conversation model', fr: 'Modèle de conversation de l\'Assistant Neuronal', es: 'Modelo de conversación del Asistente Neural' },
+  'api.task.imageGeneration': { en: 'Image Generation', fr: 'Génération d\'Images', es: 'Generación de Imágenes' },
+  'api.task.imageGeneration.desc': { en: 'Model for creating scene visuals', fr: 'Modèle pour créer les visuels de scènes', es: 'Modelo para crear visuales de escenas' },
+  'api.task.imageAnalysis': { en: 'Image Analysis', fr: 'Analyse d\'Images', es: 'Análisis de Imágenes' },
+  'api.task.imageAnalysis.desc': { en: 'Composition & lighting analysis', fr: 'Analyse de composition et d\'éclairage', es: 'Análisis de composición e iluminación' },
+  'api.task.imageEdit': { en: 'Image Editing', fr: 'Édition d\'Images', es: 'Edición de Imágenes' },
+  'api.task.imageEdit.desc': { en: 'Edit existing images with AI', fr: 'Éditer des images existantes avec l\'IA', es: 'Editar imágenes existentes con IA' },
+
   // ─── Log Console ─────────────────────────────────────────────────
   'log.title': { en: 'System Log', fr: 'Journal Système', es: 'Registro del Sistema' },
   'log.empty': { en: 'No logs yet', fr: 'Pas encore de logs', es: 'Sin registros aún' },
@@ -142,6 +155,12 @@ export const translations = {
     fr: 'Le Studio d\'Assets génère ensuite images, audio et vidéo pour chaque scène en utilisant des modèles IA de pointe de Google et OpenAI. Enfin, l\'Éditeur de Timeline vous permet d\'organiser, couper et composer votre production finale avec une précision à l\'image près.',
     es: 'El Estudio de Assets luego genera imágenes, audio y video para cada escena usando modelos de IA de última generación de Google y OpenAI. Finalmente, el Editor de Timeline le permite organizar, recortar y componer su producción final con precisión de fotograma.',
   },
+
+  // About workflow steps
+  'about.step.1': { en: 'Script Architect → AI generates scenes', fr: 'Architecte de Script → L\'IA génère les scènes', es: 'Arquitecto de Guión → La IA genera escenas' },
+  'about.step.2': { en: 'Asset Studio → Images, audio, video', fr: 'Studio d\'Assets → Images, audio, vidéo', es: 'Estudio de Assets → Imágenes, audio, video' },
+  'about.step.3': { en: 'Timeline → Multi-track editing', fr: 'Timeline → Montage multi-piste', es: 'Timeline → Edición multi-pista' },
+  'about.step.4': { en: 'Neural Assistant → Creative copilot', fr: 'Assistant Neuronal → Copilote créatif', es: 'Asistente Neural → Copiloto creativo' },
 
   'about.modules.label': { en: 'Core Modules', fr: 'Modules Principaux', es: 'Módulos Principales' },
   'about.modules.title': { en: 'Six Integrated Modules', fr: 'Six Modules Intégrés', es: 'Seis Módulos Integrados' },

@@ -90,7 +90,7 @@ export const AI_PROVIDERS: APIProvider[] = [
       },
       {
         id: 'google/gemini-2.5-flash-image',
-        name: 'Nano Banana',
+        name: 'Gemini 2.5 Flash Image',
         provider: 'google',
         providerLabel: 'Google',
         capabilities: ['image-gen'],
@@ -101,7 +101,7 @@ export const AI_PROVIDERS: APIProvider[] = [
       },
       {
         id: 'google/gemini-3-pro-image-preview',
-        name: 'Nano Banana Pro',
+        name: 'Gemini 3 Pro Image',
         provider: 'google',
         providerLabel: 'Google',
         capabilities: ['image-gen'],

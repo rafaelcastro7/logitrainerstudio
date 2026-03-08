@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { useI18n } from '@/i18n/useI18n';
 import {
-  Activity, Sparkles, Film, Clock, Cpu, Layers, Wand2, Settings2,
-  BarChart3, Globe, Zap, ArrowLeft, Brain, Palette, Volume2,
-  Shield, Workflow, Monitor, ChevronRight
+  Activity, Sparkles, Clock, Cpu, Layers, Wand2, Settings2,
+  Zap, ArrowLeft, Brain, Palette, Volume2,
+  Globe, Monitor, ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -47,11 +47,17 @@ export default function AboutPage() {
     { value: '∞', label: t('about.stat.possibilities') },
   ];
 
+  const workflowSteps = [
+    t('about.step.1'),
+    t('about.step.2'),
+    t('about.step.3'),
+    t('about.step.4'),
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ─── Hero ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        {/* Grid overlay */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{
@@ -59,12 +65,10 @@ export default function AboutPage() {
             backgroundSize: '80px 80px',
           }}
         />
-        {/* Glow orbs */}
         <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full bg-primary/8 blur-[100px] pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-6 pt-12 pb-24">
-          {/* Back nav */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }}>
             <Link
               to="/"
@@ -96,7 +100,6 @@ export default function AboutPage() {
               </p>
             </motion.div>
 
-            {/* Stats bar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -134,7 +137,7 @@ export default function AboutPage() {
             <motion.div variants={fadeUp} custom={2} className="relative">
               <div className="rounded-xl border border-border bg-card p-1 shadow-2xl shadow-primary/5">
                 <div className="rounded-lg bg-background p-6 space-y-3">
-                  {['Script Architect → AI generates scenes', 'Asset Studio → Images, audio, video', 'Timeline → Multi-track editing', 'Neural Assistant → Creative copilot'].map((step, i) => (
+                  {workflowSteps.map((step, i) => (
                     <div key={i} className="flex items-center gap-3 rounded-md border border-border/50 bg-card/50 px-4 py-3">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary/20 text-xs font-bold text-primary font-mono">{i + 1}</div>
                       <span className="text-sm text-foreground/80">{step}</span>
