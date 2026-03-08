@@ -6,8 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { I18nProvider } from "@/i18n/useI18n";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import About from "./pages/About";
+import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,18 +19,22 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <KeyboardShortcuts />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <KeyboardShortcuts />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/about" element={<About />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
       </I18nProvider>
     </QueryClientProvider>
   </ErrorBoundary>

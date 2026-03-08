@@ -1,16 +1,18 @@
 import { useProjectStore } from '@/store/useProjectStore';
 import { useAPIStore } from '@/store/useAPIStore';
 import { useI18n } from '@/i18n/useI18n';
+import { useAuth } from '@/hooks/useAuth';
 import { Locale } from '@/i18n/translations';
-import { Zap, ChevronRight, Settings2, Activity, Keyboard } from 'lucide-react';
+import { Zap, ChevronRight, Settings2, Activity, Keyboard, LogOut, Save } from 'lucide-react';
 
 const localeLabels: Record<Locale, string> = { en: 'EN', fr: 'FR', es: 'ES' };
 const localeOrder: Locale[] = ['en', 'fr', 'es'];
 
-export function TopBar({ onOpenAPIPanel }: { onOpenAPIPanel: () => void }) {
+export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void; onSave?: () => void }) {
   const { projectTitle, currentView, scenes } = useProjectStore();
   const { totalCalls, avgLatency } = useAPIStore();
   const { t, locale, setLocale } = useI18n();
+  const { user, signOut } = useAuth();
 
   const viewLabels: Record<string, string> = {
     architect: t('nav.architect'),
@@ -100,6 +102,16 @@ export function TopBar({ onOpenAPIPanel }: { onOpenAPIPanel: () => void }) {
           <Keyboard className="h-3.5 w-3.5" />
         </button>
 
+        {onSave && user && (
+          <button
+            onClick={onSave}
+            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+            title="Save Project"
+          >
+            <Save className="h-3.5 w-3.5" />
+          </button>
+        )}
+
         <button
           onClick={onOpenAPIPanel}
           className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
@@ -108,6 +120,16 @@ export function TopBar({ onOpenAPIPanel }: { onOpenAPIPanel: () => void }) {
           <Settings2 className="h-3.5 w-3.5" />
           API
         </button>
+
+        {user && (
+          <button
+            onClick={signOut}
+            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-destructive/30 hover:text-destructive"
+            title="Sign Out"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     </div>
   );
