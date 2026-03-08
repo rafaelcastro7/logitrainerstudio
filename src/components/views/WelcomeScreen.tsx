@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Activity, Sparkles, ArrowRight, Zap, Film, Clock, Cpu, Trash2, FolderOpen, Coffee, ShoppingBag, GraduationCap, Gamepad2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n/useI18n';
+import { AI_PROVIDERS } from '@/services/apiRegistry';
 
 interface WelcomeScreenProps {
   onEnter: () => void;
@@ -191,6 +192,37 @@ export function WelcomeScreen({ onEnter, recentProjects = [], onLoadProject, onD
                   </div>
                 </motion.div>
               )}
+
+              {/* Powered By — Infinite Logo Carousel */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.65 }}
+                className="w-full max-w-2xl mb-8 overflow-hidden"
+              >
+                <p className="text-xs font-mono text-muted-foreground/50 uppercase tracking-widest mb-3 text-center">
+                  Powered by Leading AI
+                </p>
+                <div className="relative">
+                  {/* Fade edges */}
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
+
+                  <div className="flex animate-marquee gap-8 py-2">
+                    {[...AI_PROVIDERS, ...AI_PROVIDERS].map((provider, i) => (
+                      <div
+                        key={`${provider.id}-${i}`}
+                        className="flex shrink-0 items-center gap-2 rounded-lg border border-border/30 bg-card/20 px-4 py-2 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/40"
+                      >
+                        <span className="text-lg">{provider.logo}</span>
+                        <span className="text-xs font-semibold text-muted-foreground/70 whitespace-nowrap font-display">
+                          {provider.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
 
               {/* CTA buttons */}
               <motion.div
