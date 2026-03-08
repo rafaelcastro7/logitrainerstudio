@@ -19,6 +19,8 @@ interface ResizeState {
   originalDuration: number;
 }
 
+const SNAP_THRESHOLD_PX = 8; // pixels within which snapping activates
+
 export function TimelineView() {
   const { timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog, updateClip } = useProjectStore();
   const { t } = useI18n();
@@ -29,9 +31,40 @@ export function TimelineView() {
   const [dragGhost, setDragGhost] = useState<{ x: number; y: number; track: 'video' | 'audio' } | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [resizePreview, setResizePreview] = useState<{ startTime: number; duration: number } | null>(null);
+  const [snapLine, setSnapLine] = useState<number | null>(null);
 
   const pxPerSec = timeline.zoom;
   const totalWidth = Math.max(timeline.duration * pxPerSec, 800);
+  const snapThresholdSec = SNAP_THRESHOLD_PX / pxPerSec;
+
+  /** Get all snap points (edges of other clips on same track), excluding a given clipId */
+  const getSnapPoints = useCallback((excludeClipId: string, track: 'video' | 'audio') => {
+    const points: number[] = [0]; // always snap to 0
+    timeline.clips.forEach((c) => {
+      if (c.id === excludeClipId) return;
+      if (c.track !== track) return;
+      points.push(c.startTime);
+      points.push(c.startTime + c.duration);
+    });
+    return points;
+  }, [timeline.clips]);
+
+  /** Try to snap a time value to the nearest snap point */
+  const trySnap = useCallback((time: number, points: number[]): { snapped: number; didSnap: boolean } => {
+    let closest = time;
+    let minDist = Infinity;
+    for (const p of points) {
+      const dist = Math.abs(time - p);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = p;
+      }
+    }
+    if (minDist <= snapThresholdSec) {
+      return { snapped: closest, didSnap: true };
+    }
+    return { snapped: Math.round(time * 4) / 4, didSnap: false };
+  }, [snapThresholdSec]);
 
   const canUndo = useProjectStore.temporal.getState().pastStates.length > 0;
   const canRedo = useProjectStore.temporal.getState().futureStates.length > 0;
@@ -165,21 +198,42 @@ export function TimelineView() {
       if (trackAreaY < 64) track = 'video';
       else if (trackAreaY < 128) track = 'audio';
 
-      const newStartTime = Math.max(0, Math.min((x - dragState.offsetX) / pxPerSec, timeline.duration - 0.5));
-      setDragGhost({ x: newStartTime, y: e.clientY, track });
+      const rawTime = Math.max(0, Math.min((x - dragState.offsetX) / pxPerSec, timeline.duration - 0.5));
+      const clip = timeline.clips.find(c => c.id === dragState.clipId);
+      const clipDuration = clip?.duration || 1;
+
+      // Snap both left and right edges
+      const snapPoints = getSnapPoints(dragState.clipId, track);
+      const { snapped: leftSnap, didSnap: leftDid } = trySnap(rawTime, snapPoints);
+      const { snapped: rightSnap, didSnap: rightDid } = trySnap(rawTime + clipDuration, snapPoints);
+
+      let finalTime: number;
+      if (leftDid && rightDid) {
+        // Pick the closer snap
+        finalTime = Math.abs(rawTime - leftSnap) <= Math.abs((rawTime + clipDuration) - rightSnap) ? leftSnap : rightSnap - clipDuration;
+      } else if (leftDid) {
+        finalTime = leftSnap;
+      } else if (rightDid) {
+        finalTime = rightSnap - clipDuration;
+      } else {
+        finalTime = Math.round(rawTime * 4) / 4;
+      }
+
+      setSnapLine(leftDid || rightDid ? (leftDid ? finalTime : finalTime + clipDuration) : null);
+      setDragGhost({ x: Math.max(0, finalTime), y: e.clientY, track });
     };
 
     const handleMouseUp = () => {
       if (dragGhost && dragState) {
-        const snapped = Math.round(dragGhost.x * 4) / 4;
         updateClip(dragState.clipId, {
-          startTime: Math.max(0, snapped),
+          startTime: Math.max(0, dragGhost.x),
           track: dragGhost.track,
         });
-        addLog('info', `Moved clip to ${dragGhost.track.toUpperCase()} track at ${snapped.toFixed(2)}s`);
+        addLog('info', `Moved clip to ${dragGhost.track.toUpperCase()} track at ${dragGhost.x.toFixed(2)}s`);
       }
       setDragState(null);
       setDragGhost(null);
+      setSnapLine(null);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -188,7 +242,7 @@ export function TimelineView() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragState, dragGhost, pxPerSec, timeline.duration, updateClip, addLog]);
+  }, [dragState, dragGhost, pxPerSec, timeline.duration, timeline.clips, updateClip, addLog, getSnapPoints, trySnap]);
 
   // --- Clip resize ---
   const handleResizeStart = (e: React.MouseEvent, clip: TimelineClip, edge: ResizeEdge) => {
@@ -206,6 +260,10 @@ export function TimelineView() {
   useEffect(() => {
     if (!resizeState) return;
 
+    const clip = timeline.clips.find(c => c.id === resizeState.clipId);
+    const track = clip?.track || 'video';
+    const snapPoints = getSnapPoints(resizeState.clipId, track);
+
     const handleMouseMove = (e: MouseEvent) => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -216,18 +274,20 @@ export function TimelineView() {
       const MIN_DURATION = 0.5;
 
       if (resizeState.edge === 'left') {
-        // Dragging left edge: changes startTime and duration
         const maxNewStart = resizeState.originalStartTime + resizeState.originalDuration - MIN_DURATION;
-        const newStart = Math.max(0, Math.min(mouseTime, maxNewStart));
-        const snappedStart = Math.round(newStart * 4) / 4;
-        const newDuration = resizeState.originalDuration + (resizeState.originalStartTime - snappedStart);
-        setResizePreview({ startTime: snappedStart, duration: Math.max(MIN_DURATION, newDuration) });
+        const rawStart = Math.max(0, Math.min(mouseTime, maxNewStart));
+        const { snapped: snappedStart, didSnap } = trySnap(rawStart, snapPoints);
+        const finalStart = didSnap ? snappedStart : Math.round(rawStart * 4) / 4;
+        const newDuration = resizeState.originalDuration + (resizeState.originalStartTime - finalStart);
+        setSnapLine(didSnap ? finalStart : null);
+        setResizePreview({ startTime: finalStart, duration: Math.max(MIN_DURATION, newDuration) });
       } else {
-        // Dragging right edge: changes duration only
-        const endTime = mouseTime;
-        const newDuration = endTime - resizeState.originalStartTime;
-        const snappedDuration = Math.round(Math.max(MIN_DURATION, newDuration) * 4) / 4;
-        setResizePreview({ startTime: resizeState.originalStartTime, duration: snappedDuration });
+        const rawEnd = mouseTime;
+        const { snapped: snappedEnd, didSnap } = trySnap(rawEnd, snapPoints);
+        const finalEnd = didSnap ? snappedEnd : Math.round(rawEnd * 4) / 4;
+        const newDuration = finalEnd - resizeState.originalStartTime;
+        setSnapLine(didSnap ? finalEnd : null);
+        setResizePreview({ startTime: resizeState.originalStartTime, duration: Math.max(MIN_DURATION, newDuration) });
       }
     };
 
@@ -241,6 +301,7 @@ export function TimelineView() {
       }
       setResizeState(null);
       setResizePreview(null);
+      setSnapLine(null);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -249,7 +310,7 @@ export function TimelineView() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizeState, resizePreview, pxPerSec, updateClip, addLog]);
+  }, [resizeState, resizePreview, pxPerSec, timeline.clips, updateClip, addLog, getSnapPoints, trySnap]);
 
   const handleRulerClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = rulerRef.current?.getBoundingClientRect();
@@ -411,6 +472,12 @@ export function TimelineView() {
                 </div>
                 <div className="relative flex-1 bg-background/30" style={{ minHeight: 64 }}>
                   <div className="absolute top-0 bottom-0 w-px bg-primary/80 z-10 pointer-events-none" style={{ left: timeline.playheadPosition * pxPerSec }} />
+                  {/* Magnetic snap line */}
+                  {snapLine !== null && (
+                    <div className="absolute top-0 bottom-0 w-px bg-yellow-400 z-20 pointer-events-none opacity-80" style={{ left: snapLine * pxPerSec }}>
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-yellow-400" />
+                    </div>
+                  )}
 
                   {trackClips.map((clip, idx) => {
                     const scene = scenes.find((s) => s.id === clip.assetId);
