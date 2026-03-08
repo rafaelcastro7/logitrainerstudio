@@ -3,7 +3,8 @@ import { useAPIStore } from '@/store/useAPIStore';
 import { useI18n } from '@/i18n/useI18n';
 import { useAuth } from '@/hooks/useAuth';
 import { Locale } from '@/i18n/translations';
-import { Zap, ChevronRight, Settings2, Activity, Keyboard, LogOut, Save } from 'lucide-react';
+import { Zap, ChevronRight, Settings2, Activity, Keyboard, LogOut, Save, UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const localeLabels: Record<Locale, string> = { en: 'EN', fr: 'FR', es: 'ES' };
 const localeOrder: Locale[] = ['en', 'fr', 'es'];
@@ -13,6 +14,7 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
   const { totalCalls, avgLatency } = useAPIStore();
   const { t, locale, setLocale } = useI18n();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const viewLabels: Record<string, string> = {
     architect: t('nav.architect'),
@@ -120,6 +122,16 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
           <Settings2 className="h-3.5 w-3.5" />
           API
         </button>
+
+        {user && (
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+            title="Profile"
+          >
+            <UserCircle className="h-3.5 w-3.5" />
+          </button>
+        )}
 
         {user && (
           <button
