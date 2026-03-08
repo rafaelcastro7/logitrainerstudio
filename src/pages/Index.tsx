@@ -17,13 +17,16 @@ import { APIManagementPanel } from '@/components/panels/APIManagementPanel';
 import { AlertsPanel } from '@/components/panels/AlertsPanel';
 import { ClipPropertiesPanel } from '@/components/panels/ClipPropertiesPanel';
 import { AdminApprovalPanel } from '@/components/panels/AdminApprovalPanel';
+import { MediaBrowserPanel } from '@/components/panels/MediaBrowserPanel';
+import { ProjectSettingsPanel } from '@/components/panels/ProjectSettingsPanel';
+import { RenderExportPanel } from '@/components/panels/RenderExportPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { Navigate } from 'react-router-dom';
-import { Loader2, Shield, Clock } from 'lucide-react';
+import { Loader2, Clock } from 'lucide-react';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
 
 const Index = () => {
@@ -36,25 +39,21 @@ const Index = () => {
   const [showAPIPanel, setShowAPIPanel] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showMediaBrowser, setShowMediaBrowser] = useState(false);
+  const [showProjectSettings, setShowProjectSettings] = useState(false);
+  const [showRenderExport, setShowRenderExport] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
 
   const imageLabScene = imageLabSceneId ? scenes.find((s) => s.id === imageLabSceneId) ?? null : null;
 
-  // Smart alert engine — monitors API calls and triggers alerts
   useAlertEngine();
-  // Global undo/redo keyboard shortcuts
   useUndoRedo();
 
-  // Request browser notification permission on mount
-  useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+  useEffect(() => { requestNotificationPermission(); }, []);
 
   useEffect(() => {
-    if (user) {
-      listProjects().then(setRecentProjects);
-    }
+    if (user) { listProjects().then(setRecentProjects); }
   }, [user, listProjects]);
 
   const handleSave = useCallback(async () => {
@@ -63,16 +62,11 @@ const Index = () => {
     return id;
   }, [saveProject, currentProjectId]);
 
-  // Auto-save every 60 seconds when not on welcome screen
   const autoSaveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     if (showWelcome || !user) return;
-    autoSaveRef.current = setInterval(() => {
-      handleSave();
-    }, 60000);
-    return () => {
-      if (autoSaveRef.current) clearInterval(autoSaveRef.current);
-    };
+    autoSaveRef.current = setInterval(() => { handleSave(); }, 60000);
+    return () => { if (autoSaveRef.current) clearInterval(autoSaveRef.current); };
   }, [showWelcome, user, handleSave]);
 
   const handleLoadProject = useCallback(async (projectId: string) => {
@@ -99,28 +93,16 @@ const Index = () => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Approval gate — admins bypass
   if (!isAdmin && !isApproved) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md text-center p-8"
-        >
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-500/15 border border-yellow-500/20">
-            <Clock className="h-8 w-8 text-yellow-500" />
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md text-center p-8">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-warning/15 border border-warning/20">
+            <Clock className="h-8 w-8 text-warning" />
           </div>
           <h2 className="font-display text-2xl font-bold text-foreground mb-3">Pending Approval</h2>
-          <p className="text-muted-foreground mb-6">
-            Your account is awaiting admin approval. You'll get access once an administrator reviews your registration.
-          </p>
-          <button
-            onClick={() => signOut()}
-            className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors"
-          >
-            Sign Out
-          </button>
+          <p className="text-muted-foreground mb-6">Your account is awaiting admin approval.</p>
+          <button onClick={() => signOut()} className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80 transition-colors">Sign Out</button>
         </motion.div>
       </div>
     );
@@ -139,14 +121,10 @@ const Index = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case 'architect':
-        return <ArchitectView />;
-      case 'studio':
-        return <StudioView onOpenImageLab={(id) => setImageLabSceneId(id)} />;
-      case 'timeline':
-        return <TimelineView />;
-      case 'dashboard':
-        return <DashboardView />;
+      case 'architect': return <ArchitectView />;
+      case 'studio': return <StudioView onOpenImageLab={(id) => setImageLabSceneId(id)} />;
+      case 'timeline': return <TimelineView />;
+      case 'dashboard': return <DashboardView />;
     }
   };
 
@@ -156,30 +134,27 @@ const Index = () => {
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         <AppSidebar onToggleAlerts={() => setShowAlerts(!showAlerts)} isAlertsOpen={showAlerts} />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <TopBar onOpenAPIPanel={() => setShowAPIPanel(true)} onSave={handleSave} onOpenAdminPanel={isAdmin ? () => setShowAdminPanel(true) : undefined} />
+          <TopBar
+            onOpenAPIPanel={() => setShowAPIPanel(true)}
+            onSave={handleSave}
+            onOpenAdminPanel={isAdmin ? () => setShowAdminPanel(true) : undefined}
+            onOpenMediaBrowser={() => setShowMediaBrowser(true)}
+            onOpenProjectSettings={() => setShowProjectSettings(true)}
+            onOpenRenderExport={() => setShowRenderExport(true)}
+          />
           <div className="flex flex-1 overflow-hidden">
             <div className="flex flex-1 flex-col overflow-hidden">
-              <div className="flex-1 overflow-hidden">
-                {renderView()}
-              </div>
+              <div className="flex-1 overflow-hidden">{renderView()}</div>
               <LogConsole />
             </div>
             <AnimatePresence>
               {showAlerts && (
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 340, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="h-full border-l border-border bg-card/50 overflow-hidden"
-                >
+                <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="h-full border-l border-border bg-card/50 overflow-hidden">
                   <AlertsPanel />
                 </motion.div>
               )}
             </AnimatePresence>
-            <AnimatePresence>
-              {isChatOpen && <ChatPanel />}
-            </AnimatePresence>
+            <AnimatePresence>{isChatOpen && <ChatPanel />}</AnimatePresence>
             <AnimatePresence>
               {(selectedClipId || selectedTransitionId) && currentView === 'timeline' && <ClipPropertiesPanel />}
             </AnimatePresence>
@@ -187,16 +162,22 @@ const Index = () => {
         </div>
       </div>
 
-      {imageLabScene && (
-        <ImageLab scene={imageLabScene} onClose={() => setImageLabSceneId(null)} />
-      )}
+      {imageLabScene && <ImageLab scene={imageLabScene} onClose={() => setImageLabSceneId(null)} />}
 
       <AnimatePresence>
         {showAPIPanel && <APIManagementPanel onClose={() => setShowAPIPanel(false)} />}
       </AnimatePresence>
-
       <AnimatePresence>
         {showAdminPanel && <AdminApprovalPanel onClose={() => setShowAdminPanel(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showMediaBrowser && <MediaBrowserPanel onClose={() => setShowMediaBrowser(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showProjectSettings && <ProjectSettingsPanel onClose={() => setShowProjectSettings(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showRenderExport && <RenderExportPanel onClose={() => setShowRenderExport(false)} />}
       </AnimatePresence>
 
       <OnboardingTour />

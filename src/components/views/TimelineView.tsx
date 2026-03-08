@@ -1,6 +1,6 @@
 import { useProjectStore, TimelineClip, TransitionType } from '@/store/useProjectStore';
 import { useI18n } from '@/i18n/useI18n';
-import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2, Copy, Trash2, Upload, Shuffle } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2, Copy, Trash2, Upload, Shuffle, Flag, Bookmark } from 'lucide-react';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { PreviewMonitor } from './PreviewMonitor';
 import { toast } from 'sonner';
@@ -41,7 +41,8 @@ export function TimelineView() {
   const {
     timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog, updateClip,
     removeClip, duplicateClip, selectedClipId, setSelectedClipId, addAsset,
-    addTransition, removeTransition, updateTransition, selectedTransitionId, setSelectedTransitionId
+    addTransition, removeTransition, updateTransition, selectedTransitionId, setSelectedTransitionId,
+    addMarker, removeMarker
   } = useProjectStore();
   const { t } = useI18n();
   const rulerRef = useRef<HTMLCanvasElement>(null);
@@ -211,6 +212,14 @@ export function TimelineView() {
         setSelectedTransitionId(null);
         addLog('info', 'Removed transition');
       }
+      // M = add marker at playhead
+      if (e.key === 'm' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        const colors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+        addMarker({ time: timeline.playheadPosition, label: `Marker`, color: colors[timeline.markers.length % colors.length] });
+        addLog('info', `Marker added at ${timeline.playheadPosition.toFixed(1)}s`);
+        toast.success('Marker added');
+      }
       if (e.code === 'Escape') {
         setSelectedClipId(null);
         setSelectedTransitionId(null);
@@ -220,7 +229,7 @@ export function TimelineView() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom, selectedClipId, selectedTransitionId, removeClip, duplicateClip, addLog, addTransition, removeTransition, timeline.clips]);
+  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom, selectedClipId, selectedTransitionId, removeClip, duplicateClip, addLog, addTransition, removeTransition, timeline.clips, timeline.markers, addMarker]);
 
   // Close menus on outside click
   useEffect(() => {
@@ -512,6 +521,7 @@ export function TimelineView() {
           { key: 'T', action: 'Transition' },
           { key: 'D', action: 'Duplicate' },
           { key: 'Del', action: 'Delete' },
+          { key: 'M', action: 'Marker' },
           { key: 'Drop files', action: 'Import media' },
         ].map(({ key, action }) => (
           <span key={key} className="text-[10px] text-muted-foreground/50">
@@ -523,15 +533,34 @@ export function TimelineView() {
       {/* Timeline content */}
       <div className="flex-1 overflow-auto" ref={containerRef}>
         <div style={{ width: totalWidth, minWidth: '100%' }}>
-          <canvas
-            ref={rulerRef}
-            onClick={handleRulerClick}
-            onMouseDown={() => setIsRulerDragging(true)}
-            onMouseMove={handleRulerDrag}
-            onMouseUp={() => setIsRulerDragging(false)}
-            onMouseLeave={() => setIsRulerDragging(false)}
-            className="cursor-pointer border-b border-border"
-          />
+          <div className="relative">
+            <canvas
+              ref={rulerRef}
+              onClick={handleRulerClick}
+              onMouseDown={() => setIsRulerDragging(true)}
+              onMouseMove={handleRulerDrag}
+              onMouseUp={() => setIsRulerDragging(false)}
+              onMouseLeave={() => setIsRulerDragging(false)}
+              className="cursor-pointer border-b border-border"
+            />
+            {/* Timeline Markers */}
+            {(timeline.markers || []).map((marker) => (
+              <div
+                key={marker.id}
+                className="absolute top-0 z-20 group cursor-pointer"
+                style={{ left: marker.time * pxPerSec - 5 }}
+                onClick={(e) => { e.stopPropagation(); setPlayhead(marker.time); }}
+                onDoubleClick={(e) => { e.stopPropagation(); removeMarker(marker.id); toast.success('Marker removed'); }}
+              >
+                <Flag className="h-4 w-4" style={{ color: marker.color }} />
+                <div className="absolute top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <span className="text-[8px] font-mono bg-card/90 backdrop-blur-sm rounded px-1 py-0.5 border border-border" style={{ color: marker.color }}>
+                    {marker.label} · {marker.time.toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {tracks.map(({ label, fullLabel, icon: Icon, trackKey, gradient, borderColor, hoverBorder }) => {
             const trackClips = timeline.clips.filter((c) => {
