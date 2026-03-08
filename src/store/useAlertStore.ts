@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { supabase } from '@/integrations/supabase/client';
+import { sendBrowserNotification } from '@/lib/notifications';
 
 export type AlertType = 'cost_threshold' | 'repeated_failures' | 'low_quota' | 'high_latency';
 export type AlertSeverity = 'info' | 'warning' | 'critical';
