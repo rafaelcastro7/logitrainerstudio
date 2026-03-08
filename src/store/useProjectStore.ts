@@ -162,6 +162,7 @@ export const useProjectStore = create<ProjectStore>()(
         }
       }),
 
+      logs: [] as LogEntry[],
       addLog: (level, message) =>
         set((s) => {
           s.logs.unshift({ id: uuid(), level, message, timestamp: new Date() });
