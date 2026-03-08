@@ -587,6 +587,41 @@ export function TimelineView() {
           </div>
         </div>
       </div>
+
+      {/* Context menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 w-44 rounded-lg border border-border bg-card/95 backdrop-blur-xl p-1 shadow-xl shadow-background/50"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
+            onClick={() => {
+              duplicateClip(contextMenu.clipId);
+              addLog('info', 'Duplicated clip');
+              setContextMenu(null);
+            }}
+          >
+            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+            Duplicate
+            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">D</kbd>
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            onClick={() => {
+              removeClip(contextMenu.clipId);
+              addLog('info', 'Deleted clip');
+              setSelectedClipId(null);
+              setContextMenu(null);
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">Del</kbd>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
