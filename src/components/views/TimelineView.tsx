@@ -32,6 +32,8 @@ export function TimelineView() {
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [resizePreview, setResizePreview] = useState<{ startTime: number; duration: number } | null>(null);
   const [snapLine, setSnapLine] = useState<number | null>(null);
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; clipId: string } | null>(null);
 
   const pxPerSec = timeline.zoom;
   const totalWidth = Math.max(timeline.duration * pxPerSec, 800);
