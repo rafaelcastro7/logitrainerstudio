@@ -6,6 +6,8 @@ import { TopBar } from '@/components/layout/TopBar';
 import { ArchitectView } from '@/components/views/ArchitectView';
 import { StudioView } from '@/components/views/StudioView';
 import { TimelineView } from '@/components/views/TimelineView';
+import { DashboardView } from '@/components/views/DashboardView';
+import { CommandPalette } from '@/components/CommandPalette';
 import { ChatPanel } from '@/components/panels/ChatPanel';
 import { LogConsole } from '@/components/panels/LogConsole';
 import { WelcomeScreen } from '@/components/views/WelcomeScreen';
