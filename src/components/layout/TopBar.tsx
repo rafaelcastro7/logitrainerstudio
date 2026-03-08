@@ -14,6 +14,7 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
   const { totalCalls, avgLatency } = useAPIStore();
   const { t, locale, setLocale } = useI18n();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const viewLabels: Record<string, string> = {
     architect: t('nav.architect'),
