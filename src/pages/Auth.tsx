@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Mail, Lock, User, ArrowRight, Loader2, Sparkles, Film, Clock, Cpu, Zap, Play } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { lovable } from '@/integrations/lovable/index';
 import { toast } from '@/components/ui/sonner';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
