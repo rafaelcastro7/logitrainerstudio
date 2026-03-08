@@ -1,5 +1,6 @@
-import { FileText, Clapperboard, Clock, Bot, Activity } from 'lucide-react';
+import { FileText, Clapperboard, Clock, Bot, Activity, Bell } from 'lucide-react';
 import { useProjectStore, ViewMode } from '@/store/useProjectStore';
+import { useAlertStore } from '@/store/useAlertStore';
 import { useI18n } from '@/i18n/useI18n';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
