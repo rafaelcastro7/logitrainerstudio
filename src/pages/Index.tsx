@@ -37,6 +37,11 @@ const Index = () => {
   // Smart alert engine — monitors API calls and triggers alerts
   useAlertEngine();
 
+  // Request browser notification permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
   useEffect(() => {
     if (user) {
       listProjects().then(setRecentProjects);
