@@ -37,6 +37,8 @@ const Index = () => {
 
   // Smart alert engine — monitors API calls and triggers alerts
   useAlertEngine();
+  // Global undo/redo keyboard shortcuts
+  useUndoRedo();
 
   // Request browser notification permission on mount
   useEffect(() => {
