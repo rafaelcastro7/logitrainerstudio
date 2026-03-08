@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { generateImage } from '@/services/aiService';
 import { getModelById } from '@/services/apiRegistry';
+import { toast } from 'sonner';
 
 export function StudioView({ onOpenImageLab }: { onOpenImageLab: (sceneId: string) => void }) {
   const { scenes, updateScene, addLog, addAsset } = useProjectStore();
@@ -42,12 +43,14 @@ export function StudioView({ onOpenImageLab }: { onOpenImageLab: (sceneId: strin
         addLog('error', `Image gen failed: ${result.error}`);
         updateScene(sceneId, { status: { ...scene.status, image: 'error' } });
         addCallLog({ function: 'generate-image', model, status: 'error', latencyMs: result.latencyMs || 0, error: result.error });
+        toast.error(`Scene ${scene.sceneNumber}: ${result.error}`);
       } else if (result.data) {
         setSceneImages((prev) => ({ ...prev, [sceneId]: result.data!.imageUrl }));
         const assetId = addAsset({ type: 'image', url: result.data.imageUrl, duration: 0, name: `Scene ${scene.sceneNumber} Image` });
         updateScene(sceneId, { status: { ...scene.status, image: 'ready' }, assets: { ...scene.assets, image: assetId } });
         addLog('success', `Image ready for scene ${scene.sceneNumber} (${result.latencyMs}ms)`);
         addCallLog({ function: 'generate-image', model: result.model || model, status: 'success', latencyMs: result.latencyMs || 0 });
+        toast.success(`Scene ${scene.sceneNumber} image ready`);
       }
     } else {
       addLog('info', `Generating ${type} for scene ${scene.sceneNumber} (simulated)...`);
@@ -55,6 +58,7 @@ export function StudioView({ onOpenImageLab }: { onOpenImageLab: (sceneId: strin
       await new Promise((r) => setTimeout(r, delay));
       updateScene(sceneId, { status: { ...scene.status, [type]: 'ready' } });
       addLog('success', `${type} ready for scene ${scene.sceneNumber}`);
+      toast.success(`Scene ${scene.sceneNumber} ${type} ready`);
     }
 
     setGeneratingAssets((prev) => ({ ...prev, [sceneId]: { ...prev[sceneId], [type]: false } }));
@@ -130,7 +134,7 @@ export function StudioView({ onOpenImageLab }: { onOpenImageLab: (sceneId: strin
                   onClick={() => scene.status.image === 'ready' && onOpenImageLab(scene.id)}
                 >
                   {sceneImages[scene.id] && (
-                    <img src={sceneImages[scene.id]} alt={`Scene ${scene.sceneNumber}`} className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={sceneImages[scene.id]} alt={`Scene ${scene.sceneNumber}`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                   )}
                   {scene.status.image === 'generating' && (
                     <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">

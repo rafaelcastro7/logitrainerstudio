@@ -5,6 +5,7 @@ import { Sparkles, Film, Clock, Image, Mic, Video, Loader2, Pencil } from 'lucid
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateScript } from '@/services/aiService';
 import { getModelById } from '@/services/apiRegistry';
+import { toast } from 'sonner';
 
 export function ArchitectView() {
   const { brief, setBrief, scenes, addScenes, clearScenes, isGeneratingScript, setGeneratingScript, addLog } = useProjectStore();
@@ -18,16 +19,19 @@ export function ArchitectView() {
     const model = preferences.scriptGeneration;
     const modelInfo = getModelById(model);
     addLog('info', `Generating script with ${modelInfo?.name || model}...`);
+    toast.loading(t('architect.genscript'), { id: 'script-gen' });
 
     const result = await generateScript(brief, model, 4);
 
     if (result.error) {
       addLog('error', `Script generation failed: ${result.error}`);
       addCallLog({ function: 'generate-script', model, status: 'error', latencyMs: result.latencyMs || 0, error: result.error });
+      toast.error(result.error, { id: 'script-gen' });
     } else if (result.data) {
       addScenes(result.data.scenes);
       addLog('success', `Generated ${result.data.scenes.length} scenes in ${result.latencyMs}ms`);
       addCallLog({ function: 'generate-script', model: result.model || model, status: 'success', latencyMs: result.latencyMs || 0 });
+      toast.success(`${result.data.scenes.length} scenes generated`, { id: 'script-gen' });
     }
 
     setGeneratingScript(false);
