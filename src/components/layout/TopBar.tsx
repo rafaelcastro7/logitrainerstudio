@@ -16,6 +16,7 @@ export function TopBar({ onOpenAPIPanel, onSave }: { onOpenAPIPanel: () => void;
   const { totalCalls, avgLatency } = useAPIStore();
   const { t, locale, setLocale } = useI18n();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [showUserMenu, setShowUserMenu] = useState(false);
