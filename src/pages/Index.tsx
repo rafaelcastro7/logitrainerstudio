@@ -12,7 +12,7 @@ import { WelcomeScreen } from '@/components/views/WelcomeScreen';
 import { ImageLab } from '@/components/views/ImageLab';
 import { APIManagementPanel } from '@/components/panels/APIManagementPanel';
 import { AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
@@ -37,7 +37,20 @@ const Index = () => {
   const handleSave = useCallback(async () => {
     const id = await saveProject(currentProjectId ?? undefined);
     if (id) setCurrentProjectId(id);
+    return id;
   }, [saveProject, currentProjectId]);
+
+  // Auto-save every 60 seconds when not on welcome screen
+  const autoSaveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (showWelcome || !user) return;
+    autoSaveRef.current = setInterval(() => {
+      handleSave();
+    }, 60000);
+    return () => {
+      if (autoSaveRef.current) clearInterval(autoSaveRef.current);
+    };
+  }, [showWelcome, user, handleSave]);
 
   const handleLoadProject = useCallback(async (projectId: string) => {
     await loadProject(projectId);
