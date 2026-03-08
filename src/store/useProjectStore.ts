@@ -82,6 +82,7 @@ interface ProjectStore {
   setZoom: (zoom: number) => void;
   togglePlay: () => void;
   addClip: (clip: Omit<TimelineClip, 'id'>) => void;
+  updateClip: (id: string, updates: Partial<Omit<TimelineClip, 'id'>>) => void;
 
   // Logs
   logs: LogEntry[];
