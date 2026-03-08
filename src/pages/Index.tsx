@@ -14,6 +14,7 @@ import { WelcomeScreen } from '@/components/views/WelcomeScreen';
 import { ImageLab } from '@/components/views/ImageLab';
 import { APIManagementPanel } from '@/components/panels/APIManagementPanel';
 import { AlertsPanel } from '@/components/panels/AlertsPanel';
+import { ClipPropertiesPanel } from '@/components/panels/ClipPropertiesPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
