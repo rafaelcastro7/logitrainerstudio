@@ -2,8 +2,9 @@ import { useAPIStore } from '@/store/useAPIStore';
 import { useAlertStore } from '@/store/useAlertStore';
 import { useProjectStore } from '@/store/useProjectStore';
 import {
-  BarChart3, Activity, Clock, AlertTriangle, CheckCircle, XCircle,
-  Zap, TrendingUp, Cpu, ArrowUpRight, ArrowDownRight
+  BarChart3, Activity, Clock, AlertTriangle, CheckCircle,
+  Zap, TrendingUp, Cpu, ArrowUpRight, ArrowDownRight,
+  Film, Image, Mic, Video, Layers, Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
@@ -21,18 +22,27 @@ const COLORS = {
   muted: 'hsl(225, 15%, 35%)',
 };
 
-function StatCard({ icon: Icon, label, value, subValue, color, trend }: {
-  icon: typeof BarChart3; label: string; value: string | number; subValue?: string; color: string; trend?: 'up' | 'down' | null;
+const STAT_STYLES = {
+  primary: { icon: 'bg-primary/10 border-primary/20', iconColor: 'text-primary' },
+  success: { icon: 'bg-success/10 border-success/20', iconColor: 'text-success' },
+  warning: { icon: 'bg-warning/10 border-warning/20', iconColor: 'text-warning' },
+  destructive: { icon: 'bg-destructive/10 border-destructive/20', iconColor: 'text-destructive' },
+} as const;
+
+function StatCard({ icon: Icon, label, value, subValue, colorKey, trend }: {
+  icon: typeof BarChart3; label: string; value: string | number; subValue?: string;
+  colorKey: keyof typeof STAT_STYLES; trend?: 'up' | 'down' | null;
 }) {
+  const styles = STAT_STYLES[colorKey];
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm"
+      className="rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm hover:shadow-premium transition-shadow"
     >
       <div className="flex items-center justify-between mb-3">
-        <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-${color}/10 border border-${color}/20`}>
-          <Icon className={`h-4 w-4 text-${color}`} />
+        <div className={`flex h-9 w-9 items-center justify-center rounded-lg border ${styles.icon}`}>
+          <Icon className={`h-4 w-4 ${styles.iconColor}`} />
         </div>
         {trend && (
           <div className={`flex items-center gap-0.5 text-[10px] font-mono ${trend === 'up' ? 'text-success' : 'text-destructive'}`}>
@@ -50,9 +60,22 @@ function StatCard({ icon: Icon, label, value, subValue, color, trend }: {
 export function DashboardView() {
   const { callLogs, totalCalls, totalErrors, avgLatency } = useAPIStore();
   const { alerts } = useAlertStore();
-  const { scenes } = useProjectStore();
+  const { scenes, timeline, assets } = useProjectStore();
 
   const successRate = totalCalls > 0 ? Math.round(((totalCalls - totalErrors) / totalCalls) * 100) : 0;
+
+  // Project stats
+  const projectStats = useMemo(() => {
+    const readyImages = scenes.filter(s => s.status.image === 'ready').length;
+    const readyAudio = scenes.filter(s => s.status.audio === 'ready').length;
+    const readyVideo = scenes.filter(s => s.status.video === 'ready').length;
+    const totalAssets = Object.keys(assets).length;
+    const totalClips = timeline.clips.length;
+    const totalTransitions = timeline.transitions.length;
+    const totalDuration = scenes.reduce((acc, s) => acc + s.durationTargetSec, 0);
+    
+    return { readyImages, readyAudio, readyVideo, totalAssets, totalClips, totalTransitions, totalDuration };
+  }, [scenes, assets, timeline]);
 
   // Build time-series data from call logs
   const timeSeriesData = useMemo(() => {
@@ -117,16 +140,67 @@ export function DashboardView() {
             LIVE
           </span>
         </div>
-        <p className="text-xs text-muted-foreground/60">Real-time monitoring of API performance, costs, and system health.</p>
+        <p className="text-xs text-muted-foreground/60">Real-time monitoring of API performance, project health, and system status.</p>
       </div>
 
       <div className="p-5 space-y-5">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard icon={BarChart3} label="Total API Calls" value={totalCalls} color="primary" />
-          <StatCard icon={CheckCircle} label="Success Rate" value={`${successRate}%`} subValue={`${totalErrors} errors`} color="success" trend={successRate >= 95 ? 'up' : successRate < 80 ? 'down' : null} />
-          <StatCard icon={Clock} label="Avg Latency" value={avgLatency > 0 ? `${avgLatency}ms` : '—'} color="warning" trend={avgLatency > 5000 ? 'down' : avgLatency > 0 ? 'up' : null} />
-          <StatCard icon={AlertTriangle} label="Active Alerts" value={alerts.filter((a) => !a.is_dismissed).length} subValue={`${alerts.filter((a) => !a.is_read).length} unread`} color="destructive" />
+        {/* Project Health Cards */}
+        <div>
+          <p className="text-[10px] font-mono text-muted-foreground/40 uppercase tracking-[0.15em] mb-3">Project Overview</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard icon={Film} label="Scenes" value={scenes.length} subValue={`${projectStats.totalDuration}s total`} colorKey="primary" />
+            <StatCard icon={Layers} label="Timeline Clips" value={projectStats.totalClips} subValue={`${projectStats.totalTransitions} transitions`} colorKey="success" />
+            <StatCard icon={Image} label="Assets Ready" value={projectStats.readyImages} subValue={`of ${scenes.length} scenes`} colorKey="warning" />
+            <StatCard icon={Sparkles} label="Total Assets" value={projectStats.totalAssets} colorKey="primary" />
+          </div>
+        </div>
+
+        {/* Scene Status Summary */}
+        {scenes.length > 0 && (
+          <div className="rounded-xl border border-border bg-card/50 p-4">
+            <h3 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Activity className="h-3.5 w-3.5 text-primary" />
+              Scene Production Status
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {scenes.map((scene) => (
+                <div key={scene.id} className="flex items-center gap-3 rounded-lg border border-border/30 bg-background/30 px-3 py-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-[10px] font-bold text-primary font-mono">
+                    {scene.sceneNumber}
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60 uppercase truncate flex-1">{scene.sceneType}</span>
+                  <div className="flex items-center gap-1">
+                    {(['image', 'audio', 'video'] as const).map((type) => {
+                      const IconMap = { image: Image, audio: Mic, video: Video };
+                      const Icon = IconMap[type];
+                      const status = scene.status[type];
+                      return (
+                        <span key={type} className={`flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[8px] font-mono ${
+                          status === 'ready' ? 'bg-success/10 text-success' :
+                          status === 'generating' ? 'bg-warning/10 text-warning' :
+                          status === 'error' ? 'bg-destructive/10 text-destructive' :
+                          'bg-secondary/50 text-muted-foreground/30'
+                        }`}>
+                          <Icon className="h-2.5 w-2.5" />
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* API KPI Cards */}
+        <div>
+          <p className="text-[10px] font-mono text-muted-foreground/40 uppercase tracking-[0.15em] mb-3">API Performance</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard icon={BarChart3} label="Total API Calls" value={totalCalls} colorKey="primary" />
+            <StatCard icon={CheckCircle} label="Success Rate" value={`${successRate}%`} subValue={`${totalErrors} errors`} colorKey="success" trend={successRate >= 95 ? 'up' : successRate < 80 ? 'down' : null} />
+            <StatCard icon={Clock} label="Avg Latency" value={avgLatency > 0 ? `${avgLatency}ms` : '—'} colorKey="warning" trend={avgLatency > 5000 ? 'down' : avgLatency > 0 ? 'up' : null} />
+            <StatCard icon={AlertTriangle} label="Active Alerts" value={alerts.filter((a) => !a.is_dismissed).length} subValue={`${alerts.filter((a) => !a.is_read).length} unread`} colorKey="destructive" />
+          </div>
         </div>
 
         {/* Charts Row */}
@@ -227,16 +301,16 @@ export function DashboardView() {
             </div>
           </div>
         ) : (
-          /* Empty state */
+          /* Empty state for API data */
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20"
+            className="flex flex-col items-center justify-center py-16 rounded-xl border border-border/30 bg-card/20"
           >
             <div className="rounded-2xl bg-primary/5 border border-primary/10 p-6 mb-4">
               <BarChart3 className="h-12 w-12 text-primary/30" />
             </div>
-            <h3 className="font-display text-lg font-semibold text-foreground mb-2">No data yet</h3>
+            <h3 className="font-display text-lg font-semibold text-foreground mb-2">No API data yet</h3>
             <p className="text-sm text-muted-foreground/50 max-w-sm text-center">
               Start generating scripts, images, or chatting with the Neural Assistant. API metrics will appear here in real-time.
             </p>
