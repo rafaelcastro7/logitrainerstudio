@@ -210,12 +210,12 @@ export function ClipPropertiesPanel() {
       <div className="flex-1 overflow-auto p-4 space-y-5">
         {/* Clip info */}
         <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-secondary/30 p-3">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${clip.track === 'video' ? 'bg-primary/15 text-primary' : 'bg-success/15 text-success'}`}>
-            {clip.track === 'video' ? <Film className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${clip.track.startsWith('V') ? 'bg-primary/15 text-primary' : 'bg-success/15 text-success'}`}>
+            {clip.track.startsWith('V') ? <Film className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </div>
           <div>
             <p className="text-xs font-semibold text-foreground">
-              {clip.name || `S${scene?.sceneNumber || '?'}`} — {clip.track === 'video' ? 'Video' : 'Audio'}
+              {clip.name || `S${scene?.sceneNumber || '?'}`} — {clip.track}
             </p>
             <p className="text-[10px] text-muted-foreground font-mono">
               {clip.startTime.toFixed(2)}s → {(clip.startTime + clip.duration).toFixed(2)}s
@@ -255,7 +255,7 @@ export function ClipPropertiesPanel() {
         </div>
 
         {/* Opacity (video only) */}
-        {clip.track === 'video' && (
+        {clip.track.startsWith('V') && (
           <div>
             <label className="flex items-center justify-between mb-2">
               <span className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -301,7 +301,7 @@ export function ClipPropertiesPanel() {
         </div>
 
         {/* Outgoing transition */}
-        {clip.track === 'video' && nextClip && (
+        {clip.track.startsWith('V') && nextClip && (
           <div className="border-t border-border/50 pt-4">
             <label className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
               <Shuffle className="h-3 w-3" /> Outgoing Transition

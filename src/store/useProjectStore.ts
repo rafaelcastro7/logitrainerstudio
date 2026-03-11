@@ -39,12 +39,13 @@ export interface TimelineTransition {
 export interface TimelineClip {
   id: string;
   assetId: string;
-  track: 'video' | 'audio';
+  track: string; // e.g. 'V1', 'V2', 'A1', 'A2'
   startTime: number;
   duration: number;
   name?: string;
   opacity?: number;
   volume?: number;
+  speed?: number; // playback rate, 1.0 = normal
 }
 
 export interface TimelineMarker {
@@ -52,6 +53,15 @@ export interface TimelineMarker {
   time: number;
   label: string;
   color: string;
+}
+
+export interface TrackConfig {
+  id: string;
+  type: 'video' | 'audio';
+  label: string;
+  muted: boolean;
+  locked: boolean;
+  height: number;
 }
 
 export interface ProjectSettings {
@@ -65,6 +75,7 @@ export interface TimelineState {
   clips: TimelineClip[];
   transitions: TimelineTransition[];
   markers: TimelineMarker[];
+  tracks: TrackConfig[];
   playheadPosition: number;
   zoom: number;
   isPlaying: boolean;
@@ -85,6 +96,13 @@ export interface ChatMessage {
   sources?: { title: string; url: string }[];
   timestamp: Date;
 }
+
+const DEFAULT_TRACKS: TrackConfig[] = [
+  { id: 'V1', type: 'video', label: 'V1', muted: false, locked: false, height: 64 },
+  { id: 'V2', type: 'video', label: 'V2', muted: false, locked: false, height: 64 },
+  { id: 'A1', type: 'audio', label: 'A1', muted: false, locked: false, height: 56 },
+  { id: 'A2', type: 'audio', label: 'A2', muted: false, locked: false, height: 56 },
+];
 
 interface ProjectStore {
   projectTitle: string;
@@ -109,6 +127,11 @@ interface ProjectStore {
   updateClip: (id: string, updates: Partial<Omit<TimelineClip, 'id'>>) => void;
   removeClip: (id: string) => void;
   duplicateClip: (id: string) => void;
+  splitClip: (id: string, atTime: number) => void;
+
+  addTrack: (type: 'video' | 'audio') => void;
+  removeTrack: (trackId: string) => void;
+  updateTrack: (trackId: string, updates: Partial<Omit<TrackConfig, 'id'>>) => void;
 
   addTransition: (transition: Omit<TimelineTransition, 'id'>) => void;
   updateTransition: (id: string, updates: Partial<Omit<TimelineTransition, 'id'>>) => void;
@@ -185,6 +208,7 @@ export const useProjectStore = create<ProjectStore>()(
         clips: [],
         transitions: [],
         markers: [],
+        tracks: [...DEFAULT_TRACKS],
         playheadPosition: 0,
         zoom: 50,
         isPlaying: false,
@@ -213,6 +237,59 @@ export const useProjectStore = create<ProjectStore>()(
         if (clip) {
           s.timeline.clips.push({ ...clip, id: uuid(), startTime: clip.startTime + clip.duration });
         }
+      }),
+      splitClip: (id, atTime) => set((s) => {
+        const clip = s.timeline.clips.find((c) => c.id === id);
+        if (!clip) return;
+        if (atTime <= clip.startTime || atTime >= clip.startTime + clip.duration) return;
+        const firstDuration = atTime - clip.startTime;
+        const secondDuration = clip.duration - firstDuration;
+        clip.duration = firstDuration;
+        s.timeline.clips.push({
+          ...clip,
+          id: uuid(),
+          startTime: atTime,
+          duration: secondDuration,
+          name: clip.name ? `${clip.name} (2)` : undefined,
+        });
+      }),
+
+      addTrack: (type) => set((s) => {
+        const existing = s.timeline.tracks.filter(t => t.type === type);
+        const num = existing.length + 1;
+        const prefix = type === 'video' ? 'V' : 'A';
+        const label = `${prefix}${num}`;
+        const newTrack: TrackConfig = {
+          id: label,
+          type,
+          label,
+          muted: false,
+          locked: false,
+          height: type === 'video' ? 64 : 56,
+        };
+        // Insert video tracks before audio tracks, audio at end
+        if (type === 'video') {
+          let lastVideoIdx = -1;
+          for (let i = s.timeline.tracks.length - 1; i >= 0; i--) {
+            if (s.timeline.tracks[i].type === 'video') { lastVideoIdx = i; break; }
+          }
+          s.timeline.tracks.splice(lastVideoIdx + 1, 0, newTrack);
+        } else {
+          s.timeline.tracks.push(newTrack);
+        }
+      }),
+      removeTrack: (trackId) => set((s) => {
+        // Don't remove if it's the last track of its type
+        const track = s.timeline.tracks.find(t => t.id === trackId);
+        if (!track) return;
+        const sameType = s.timeline.tracks.filter(t => t.type === track.type);
+        if (sameType.length <= 1) return;
+        s.timeline.tracks = s.timeline.tracks.filter(t => t.id !== trackId);
+        s.timeline.clips = s.timeline.clips.filter(c => c.track !== trackId);
+      }),
+      updateTrack: (trackId, updates) => set((s) => {
+        const idx = s.timeline.tracks.findIndex(t => t.id === trackId);
+        if (idx !== -1) Object.assign(s.timeline.tracks[idx], updates);
       }),
 
       addTransition: (transition) => set((s) => {
@@ -288,9 +365,10 @@ export const useProjectStore = create<ProjectStore>()(
         s.projectTitle = data.title || 'Imported Project';
         s.brief = data.brief || '';
         s.scenes = data.scenes || [];
-        s.timeline = data.timeline || { clips: [], transitions: [], markers: [], playheadPosition: 0, zoom: 50, isPlaying: false, duration: 60 };
+        s.timeline = data.timeline || { clips: [], transitions: [], markers: [], tracks: [...DEFAULT_TRACKS], playheadPosition: 0, zoom: 50, isPlaying: false, duration: 60 };
         if (!s.timeline.transitions) s.timeline.transitions = [];
         if (!s.timeline.markers) s.timeline.markers = [];
+        if (!s.timeline.tracks || s.timeline.tracks.length === 0) s.timeline.tracks = [...DEFAULT_TRACKS];
         s.assets = data.assets || {};
       }),
     })),
