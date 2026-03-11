@@ -269,7 +269,10 @@ export const useProjectStore = create<ProjectStore>()(
         };
         // Insert video tracks before audio tracks, audio at end
         if (type === 'video') {
-          const lastVideoIdx = s.timeline.tracks.findLastIndex(t => t.type === 'video');
+          let lastVideoIdx = -1;
+          for (let i = s.timeline.tracks.length - 1; i >= 0; i--) {
+            if (s.timeline.tracks[i].type === 'video') { lastVideoIdx = i; break; }
+          }
           s.timeline.tracks.splice(lastVideoIdx + 1, 0, newTrack);
         } else {
           s.timeline.tracks.push(newTrack);
