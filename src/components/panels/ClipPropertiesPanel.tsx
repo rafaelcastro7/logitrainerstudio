@@ -301,7 +301,7 @@ export function ClipPropertiesPanel() {
         </div>
 
         {/* Outgoing transition */}
-        {clip.track === 'video' && nextClip && (
+        {clip.track.startsWith('V') && nextClip && (
           <div className="border-t border-border/50 pt-4">
             <label className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
               <Shuffle className="h-3 w-3" /> Outgoing Transition
