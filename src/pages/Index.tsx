@@ -4,6 +4,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useApproval } from '@/hooks/useApproval';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TopBar } from '@/components/layout/TopBar';
+import { StatusBar } from '@/components/layout/StatusBar';
 import { ArchitectView } from '@/components/views/ArchitectView';
 import { StudioView } from '@/components/views/StudioView';
 import { TimelineView } from '@/components/views/TimelineView';
@@ -64,10 +65,7 @@ const Index = () => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === '?') {
-        e.preventDefault();
-        setShowKeyboardShortcuts(prev => !prev);
-      }
+      if (e.key === '?') { e.preventDefault(); setShowKeyboardShortcuts(prev => !prev); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -178,32 +176,19 @@ const Index = () => {
               {(selectedClipId || selectedTransitionId) && currentView === 'timeline' && <ClipPropertiesPanel />}
             </AnimatePresence>
           </div>
+          <StatusBar />
         </div>
       </div>
 
       {imageLabScene && <ImageLab scene={imageLabScene} onClose={() => setImageLabSceneId(null)} />}
 
-      <AnimatePresence>
-        {showAPIPanel && <APIManagementPanel onClose={() => setShowAPIPanel(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showAdminPanel && <AdminApprovalPanel onClose={() => setShowAdminPanel(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showMediaBrowser && <MediaBrowserPanel onClose={() => setShowMediaBrowser(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showProjectSettings && <ProjectSettingsPanel onClose={() => setShowProjectSettings(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showRenderExport && <RenderExportPanel onClose={() => setShowRenderExport(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showKeyboardShortcuts && <KeyboardShortcutsHelp onClose={() => setShowKeyboardShortcuts(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showColorGrading && <ColorGradingPanel onClose={() => setShowColorGrading(false)} />}
-      </AnimatePresence>
+      <AnimatePresence>{showAPIPanel && <APIManagementPanel onClose={() => setShowAPIPanel(false)} />}</AnimatePresence>
+      <AnimatePresence>{showAdminPanel && <AdminApprovalPanel onClose={() => setShowAdminPanel(false)} />}</AnimatePresence>
+      <AnimatePresence>{showMediaBrowser && <MediaBrowserPanel onClose={() => setShowMediaBrowser(false)} />}</AnimatePresence>
+      <AnimatePresence>{showProjectSettings && <ProjectSettingsPanel onClose={() => setShowProjectSettings(false)} />}</AnimatePresence>
+      <AnimatePresence>{showRenderExport && <RenderExportPanel onClose={() => setShowRenderExport(false)} />}</AnimatePresence>
+      <AnimatePresence>{showKeyboardShortcuts && <KeyboardShortcutsHelp onClose={() => setShowKeyboardShortcuts(false)} />}</AnimatePresence>
+      <AnimatePresence>{showColorGrading && <ColorGradingPanel onClose={() => setShowColorGrading(false)} />}</AnimatePresence>
 
       <OnboardingTour />
     </>

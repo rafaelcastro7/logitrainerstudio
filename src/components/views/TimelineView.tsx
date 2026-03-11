@@ -1,6 +1,6 @@
 import { useProjectStore, TimelineClip, TransitionType } from '@/store/useProjectStore';
 import { useI18n } from '@/i18n/useI18n';
-import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2, Copy, Trash2, Upload, Shuffle, Flag, Bookmark } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ZoomIn, ZoomOut, Volume2, Film, Plus, GripVertical, Undo2, Redo2, Copy, Trash2, Upload, Shuffle, Flag, Bookmark, Scissors, Lock, Unlock, VolumeX, Eye, EyeOff } from 'lucide-react';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { PreviewMonitor } from './PreviewMonitor';
 import { toast } from 'sonner';
@@ -10,7 +10,7 @@ type ResizeEdge = 'left' | 'right';
 interface DragState {
   clipId: string;
   offsetX: number;
-  originalTrack: 'video' | 'audio';
+  originalTrack: string;
   originalStartTime: number;
 }
 
@@ -40,32 +40,38 @@ const TRANSITION_OPTIONS: { value: TransitionType; label: string; icon: string }
 export function TimelineView() {
   const {
     timeline, setPlayhead, setZoom, togglePlay, scenes, addClip, addLog, updateClip,
-    removeClip, duplicateClip, selectedClipId, setSelectedClipId, addAsset,
+    removeClip, duplicateClip, splitClip, selectedClipId, setSelectedClipId, addAsset,
     addTransition, removeTransition, updateTransition, selectedTransitionId, setSelectedTransitionId,
-    addMarker, removeMarker
+    addMarker, removeMarker, addTrack, updateTrack
   } = useProjectStore();
   const { t } = useI18n();
   const rulerRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRulerDragging, setIsRulerDragging] = useState(false);
   const [dragState, setDragState] = useState<DragState | null>(null);
-  const [dragGhost, setDragGhost] = useState<{ x: number; y: number; track: 'video' | 'audio' } | null>(null);
+  const [dragGhost, setDragGhost] = useState<{ x: number; y: number; track: string } | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [resizePreview, setResizePreview] = useState<{ startTime: number; duration: number } | null>(null);
   const [snapLine, setSnapLine] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; clipId: string } | null>(null);
   const [transitionMenu, setTransitionMenu] = useState<{ x: number; y: number; fromClipId: string; toClipId: string } | null>(null);
-  const [fileDragOver, setFileDragOver] = useState<'video' | 'audio' | null>(null);
+  const [fileDragOver, setFileDragOver] = useState<string | null>(null);
 
   const pxPerSec = timeline.zoom;
   const totalWidth = Math.max(timeline.duration * pxPerSec, 800);
   const snapThresholdSec = SNAP_THRESHOLD_PX / pxPerSec;
 
-  const getSnapPoints = useCallback((excludeClipId: string, track: 'video' | 'audio') => {
+  // Ensure tracks exist (backwards compat)
+  const tracks = timeline.tracks && timeline.tracks.length > 0 ? timeline.tracks : [
+    { id: 'V1', type: 'video' as const, label: 'V1', muted: false, locked: false, height: 64 },
+    { id: 'A1', type: 'audio' as const, label: 'A1', muted: false, locked: false, height: 56 },
+  ];
+
+  const getSnapPoints = useCallback((excludeClipId: string, trackId: string) => {
     const points: number[] = [0];
     timeline.clips.forEach((c) => {
       if (c.id === excludeClipId) return;
-      if (c.track !== track) return;
+      if (c.track !== trackId) return;
       points.push(c.startTime);
       points.push(c.startTime + c.duration);
     });
@@ -77,16 +83,13 @@ export function TimelineView() {
     let minDist = Infinity;
     for (const p of points) {
       const dist = Math.abs(time - p);
-      if (dist < minDist) {
-        minDist = dist;
-        closest = p;
-      }
+      if (dist < minDist) { minDist = dist; closest = p; }
     }
     if (minDist <= snapThresholdSec) return { snapped: closest, didSnap: true };
     return { snapped: Math.round(time * 4) / 4, didSnap: false };
   }, [snapThresholdSec]);
 
-  // --- Ruler drawing ---
+  // Ruler drawing
   const drawRuler = useCallback(() => {
     const canvas = rulerRef.current;
     if (!canvas) return;
@@ -117,43 +120,25 @@ export function TimelineView() {
       const x = sec * pxPerSec;
       const isMajor = sec % 5 === 0;
       if (isMajor) {
-        ctx.beginPath();
-        ctx.strokeStyle = colorBorder;
-        ctx.lineWidth = 1;
-        ctx.moveTo(x, 18);
-        ctx.lineTo(x, 36);
-        ctx.stroke();
+        ctx.beginPath(); ctx.strokeStyle = colorBorder; ctx.lineWidth = 1;
+        ctx.moveTo(x, 18); ctx.lineTo(x, 36); ctx.stroke();
         ctx.fillStyle = colorMutedFg;
         ctx.font = '10px JetBrains Mono, monospace';
         ctx.textAlign = 'center';
-        const m = Math.floor(sec / 60);
-        const s = sec % 60;
+        const m = Math.floor(sec / 60); const s = sec % 60;
         ctx.fillText(`${m}:${s.toString().padStart(2, '0')}`, x, 14);
       } else if (pxPerSec > 30) {
-        ctx.beginPath();
-        ctx.strokeStyle = colorBorder;
-        ctx.lineWidth = 0.5;
-        ctx.moveTo(x, 28);
-        ctx.lineTo(x, 36);
-        ctx.stroke();
+        ctx.beginPath(); ctx.strokeStyle = colorBorder; ctx.lineWidth = 0.5;
+        ctx.moveTo(x, 28); ctx.lineTo(x, 36); ctx.stroke();
       }
     }
 
     const px = timeline.playheadPosition * pxPerSec;
-    ctx.beginPath();
-    ctx.fillStyle = colorPrimary;
-    ctx.moveTo(px - 6, 0);
-    ctx.lineTo(px + 6, 0);
-    ctx.lineTo(px + 3, 8);
-    ctx.lineTo(px - 3, 8);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.strokeStyle = colorPrimary;
-    ctx.lineWidth = 2;
-    ctx.moveTo(px, 8);
-    ctx.lineTo(px, 36);
-    ctx.stroke();
+    ctx.beginPath(); ctx.fillStyle = colorPrimary;
+    ctx.moveTo(px - 6, 0); ctx.lineTo(px + 6, 0); ctx.lineTo(px + 3, 8); ctx.lineTo(px - 3, 8);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.strokeStyle = colorPrimary; ctx.lineWidth = 2;
+    ctx.moveTo(px, 8); ctx.lineTo(px, 36); ctx.stroke();
   }, [pxPerSec, totalWidth, timeline.duration, timeline.playheadPosition]);
 
   useEffect(() => { drawRuler(); }, [drawRuler]);
@@ -178,19 +163,22 @@ export function TimelineView() {
       if (e.code === 'ArrowRight') setPlayhead(Math.min(timeline.duration, timeline.playheadPosition + 1));
       if (e.code === 'Equal' || e.code === 'NumpadAdd') setZoom(Math.min(120, timeline.zoom + 10));
       if (e.code === 'Minus' || e.code === 'NumpadSubtract') setZoom(Math.max(20, timeline.zoom - 10));
+      
       if (selectedClipId) {
         if (e.code === 'Delete' || e.code === 'Backspace') {
-          e.preventDefault();
-          removeClip(selectedClipId);
-          addLog('info', 'Deleted clip');
-          setSelectedClipId(null);
+          e.preventDefault(); removeClip(selectedClipId); addLog('info', 'Deleted clip'); setSelectedClipId(null);
         }
         if (e.key === 'd' && !e.metaKey && !e.ctrlKey) {
-          e.preventDefault();
-          duplicateClip(selectedClipId);
-          addLog('info', 'Duplicated clip');
+          e.preventDefault(); duplicateClip(selectedClipId); addLog('info', 'Duplicated clip');
         }
-        // T key = add transition to next clip
+        // S = Split at playhead
+        if (e.key === 's' && !e.metaKey && !e.ctrlKey) {
+          e.preventDefault();
+          splitClip(selectedClipId, timeline.playheadPosition);
+          addLog('info', `Split clip at ${timeline.playheadPosition.toFixed(1)}s`);
+          toast.success('Clip split');
+        }
+        // T = add transition
         if (e.key === 't' && !e.metaKey && !e.ctrlKey) {
           e.preventDefault();
           const clip = timeline.clips.find((c) => c.id === selectedClipId);
@@ -200,36 +188,28 @@ export function TimelineView() {
               .sort((a, b) => a.startTime - b.startTime)[0];
             if (nextClip) {
               addTransition({ type: 'dissolve', duration: 0.5, fromClipId: clip.id, toClipId: nextClip.id });
-              addLog('info', 'Added dissolve transition');
-              toast.success('Dissolve transition added');
+              addLog('info', 'Added dissolve transition'); toast.success('Dissolve transition added');
             }
           }
         }
       }
       if (selectedTransitionId && (e.code === 'Delete' || e.code === 'Backspace')) {
-        e.preventDefault();
-        removeTransition(selectedTransitionId);
-        setSelectedTransitionId(null);
-        addLog('info', 'Removed transition');
+        e.preventDefault(); removeTransition(selectedTransitionId); setSelectedTransitionId(null); addLog('info', 'Removed transition');
       }
-      // M = add marker at playhead
+      // M = marker
       if (e.key === 'm' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         const colors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
-        addMarker({ time: timeline.playheadPosition, label: `Marker`, color: colors[timeline.markers.length % colors.length] });
-        addLog('info', `Marker added at ${timeline.playheadPosition.toFixed(1)}s`);
-        toast.success('Marker added');
+        addMarker({ time: timeline.playheadPosition, label: 'Marker', color: colors[timeline.markers.length % colors.length] });
+        addLog('info', `Marker added at ${timeline.playheadPosition.toFixed(1)}s`); toast.success('Marker added');
       }
       if (e.code === 'Escape') {
-        setSelectedClipId(null);
-        setSelectedTransitionId(null);
-        setContextMenu(null);
-        setTransitionMenu(null);
+        setSelectedClipId(null); setSelectedTransitionId(null); setContextMenu(null); setTransitionMenu(null);
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [togglePlay, setPlayhead, setZoom, timeline.playheadPosition, timeline.duration, timeline.zoom, selectedClipId, selectedTransitionId, removeClip, duplicateClip, addLog, addTransition, removeTransition, timeline.clips, timeline.markers, addMarker]);
+  }, [togglePlay, setPlayhead, setZoom, timeline, selectedClipId, selectedTransitionId, removeClip, duplicateClip, splitClip, addLog, addTransition, removeTransition, addMarker]);
 
   // Close menus on outside click
   useEffect(() => {
@@ -239,7 +219,7 @@ export function TimelineView() {
     return () => window.removeEventListener('click', handler);
   }, [contextMenu, transitionMenu]);
 
-  // --- Clip drag ---
+  // Clip drag
   const handleClipDragStart = (e: React.MouseEvent, clip: TimelineClip) => {
     if (resizeState) return;
     e.preventDefault();
@@ -250,6 +230,16 @@ export function TimelineView() {
     setDragState({ clipId: clip.id, offsetX, originalTrack: clip.track, originalStartTime: clip.startTime });
   };
 
+  // Get track Y position
+  const getTrackAtY = useCallback((y: number): string => {
+    let accumulated = 36 + 28; // ruler + hints bar
+    for (const track of tracks) {
+      if (y < accumulated + track.height) return track.id;
+      accumulated += track.height;
+    }
+    return tracks[tracks.length - 1].id;
+  }, [tracks]);
+
   useEffect(() => {
     if (!dragState) return;
     const handleMouseMove = (e: MouseEvent) => {
@@ -258,10 +248,7 @@ export function TimelineView() {
       const scrollLeft = containerRef.current?.scrollLeft || 0;
       const x = e.clientX - rect.left + scrollLeft - 80;
       const y = e.clientY - rect.top;
-      const trackAreaY = y - 36 - 28;
-      let track: 'video' | 'audio' = dragState.originalTrack;
-      if (trackAreaY < 64) track = 'video';
-      else if (trackAreaY < 128) track = 'audio';
+      const track = getTrackAtY(y);
       const rawTime = Math.max(0, Math.min((x - dragState.offsetX) / pxPerSec, timeline.duration - 0.5));
       const clip = timeline.clips.find(c => c.id === dragState.clipId);
       const clipDuration = clip?.duration || 1;
@@ -280,21 +267,18 @@ export function TimelineView() {
     const handleMouseUp = () => {
       if (dragGhost && dragState) {
         updateClip(dragState.clipId, { startTime: Math.max(0, dragGhost.x), track: dragGhost.track });
-        addLog('info', `Moved clip to ${dragGhost.track.toUpperCase()} track at ${dragGhost.x.toFixed(2)}s`);
+        addLog('info', `Moved clip to ${dragGhost.track} at ${dragGhost.x.toFixed(2)}s`);
       }
-      setDragState(null);
-      setDragGhost(null);
-      setSnapLine(null);
+      setDragState(null); setDragGhost(null); setSnapLine(null);
     };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [dragState, dragGhost, pxPerSec, timeline.duration, timeline.clips, updateClip, addLog, getSnapPoints, trySnap]);
+  }, [dragState, dragGhost, pxPerSec, timeline.duration, timeline.clips, updateClip, addLog, getSnapPoints, trySnap, getTrackAtY]);
 
-  // --- Clip resize ---
+  // Clip resize
   const handleResizeStart = (e: React.MouseEvent, clip: TimelineClip, edge: ResizeEdge) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     setResizeState({ clipId: clip.id, edge, originalStartTime: clip.startTime, originalDuration: clip.duration });
     setResizePreview({ startTime: clip.startTime, duration: clip.duration });
   };
@@ -302,8 +286,8 @@ export function TimelineView() {
   useEffect(() => {
     if (!resizeState) return;
     const clip = timeline.clips.find(c => c.id === resizeState.clipId);
-    const track = clip?.track || 'video';
-    const snapPoints = getSnapPoints(resizeState.clipId, track);
+    const trackId = clip?.track || 'V1';
+    const snapPoints = getSnapPoints(resizeState.clipId, trackId);
     const handleMouseMove = (e: MouseEvent) => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -330,68 +314,36 @@ export function TimelineView() {
     const handleMouseUp = () => {
       if (resizePreview && resizeState) {
         updateClip(resizeState.clipId, { startTime: resizePreview.startTime, duration: resizePreview.duration });
-        addLog('info', `Resized clip: ${resizePreview.duration.toFixed(2)}s at ${resizePreview.startTime.toFixed(2)}s`);
+        addLog('info', `Resized clip: ${resizePreview.duration.toFixed(2)}s`);
       }
-      setResizeState(null);
-      setResizePreview(null);
-      setSnapLine(null);
+      setResizeState(null); setResizePreview(null); setSnapLine(null);
     };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [resizeState, resizePreview, pxPerSec, timeline.clips, updateClip, addLog, getSnapPoints, trySnap]);
 
-  // --- File drag & drop from OS ---
-  const handleFileDragOver = (e: React.DragEvent, track: 'video' | 'audio') => {
-    e.preventDefault();
-    e.stopPropagation();
-    setFileDragOver(track);
-  };
-
-  const handleFileDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setFileDragOver(null);
-  };
-
-  const handleFileDrop = (e: React.DragEvent, track: 'video' | 'audio') => {
-    e.preventDefault();
-    e.stopPropagation();
-    setFileDragOver(null);
-
+  // File drag & drop
+  const handleFileDrop = (e: React.DragEvent, trackId: string) => {
+    e.preventDefault(); e.stopPropagation(); setFileDragOver(null);
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
-
     const rect = containerRef.current?.getBoundingClientRect();
     const scrollLeft = containerRef.current?.scrollLeft || 0;
     let dropTime = rect ? Math.max(0, (e.clientX - rect.left + scrollLeft - 80) / pxPerSec) : 0;
     dropTime = Math.round(dropTime * 4) / 4;
-
     files.forEach((file, idx) => {
       const isImage = file.type.startsWith('image/');
       const isAudio = file.type.startsWith('audio/');
       const isVideo = file.type.startsWith('video/');
-
-      if (!isImage && !isAudio && !isVideo) {
-        toast.error(`Unsupported file: ${file.name}`);
-        return;
-      }
-
+      if (!isImage && !isAudio && !isVideo) { toast.error(`Unsupported: ${file.name}`); return; }
       const url = URL.createObjectURL(file);
       const type: 'image' | 'audio' | 'video' = isImage ? 'image' : isAudio ? 'audio' : 'video';
       const assetId = addAsset({ type, url, duration: 5, name: file.name });
-
-      addClip({
-        assetId,
-        track: isAudio ? 'audio' : track,
-        startTime: dropTime + idx * 5,
-        duration: 5,
-        name: file.name,
-      });
-
-      addLog('success', `Dropped "${file.name}" → ${track} track at ${dropTime.toFixed(1)}s`);
+      addClip({ assetId, track: trackId, startTime: dropTime + idx * 5, duration: 5, name: file.name });
+      addLog('success', `Dropped "${file.name}" → ${trackId} at ${dropTime.toFixed(1)}s`);
     });
-
-    toast.success(`${files.length} file(s) added to timeline`);
+    toast.success(`${files.length} file(s) added`);
   };
 
   const handleRulerClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -416,24 +368,18 @@ export function TimelineView() {
   const addSceneClips = () => {
     let currentTime = 0;
     scenes.forEach((scene) => {
-      const videoClipId = addClip({ assetId: scene.id, track: 'video', startTime: currentTime, duration: scene.durationTargetSec });
-      const audioClipId = addClip({ assetId: scene.id, track: 'audio', startTime: currentTime, duration: scene.durationTargetSec });
+      addClip({ assetId: scene.id, track: 'V1', startTime: currentTime, duration: scene.durationTargetSec });
+      addClip({ assetId: scene.id, track: 'A1', startTime: currentTime, duration: scene.durationTargetSec });
       currentTime += scene.durationTargetSec;
     });
-    // Auto-add dissolve transitions between consecutive video clips
     const videoClips = useProjectStore.getState().timeline.clips
-      .filter((c) => c.track === 'video')
+      .filter((c) => c.track === 'V1')
       .sort((a, b) => a.startTime - b.startTime);
     for (let i = 0; i < videoClips.length - 1; i++) {
       addTransition({ type: 'dissolve', duration: 0.5, fromClipId: videoClips[i].id, toClipId: videoClips[i + 1].id });
     }
-    addLog('success', `Added ${scenes.length} scenes with transitions to timeline`);
+    addLog('success', `Added ${scenes.length} scenes with transitions`);
   };
-
-  const tracks = [
-    { label: 'V1', fullLabel: t('timeline.video.empty'), icon: Film, trackKey: 'video' as const, gradient: 'from-primary/30 to-primary/10', borderColor: 'border-primary/40', hoverBorder: 'border-primary/70' },
-    { label: 'A1', fullLabel: t('timeline.audio.empty'), icon: Volume2, trackKey: 'audio' as const, gradient: 'from-success/30 to-success/10', borderColor: 'border-success/40', hoverBorder: 'border-success/70' },
-  ];
 
   const getClipStyle = (clip: TimelineClip) => {
     if (resizeState?.clipId === clip.id && resizePreview) {
@@ -445,11 +391,13 @@ export function TimelineView() {
     return { left: clip.startTime * pxPerSec, width: clip.duration * pxPerSec };
   };
 
-  const isDropTarget = (trackKey: 'video' | 'audio') => dragState && dragGhost?.track === trackKey;
+  const getTrackColors = (type: 'video' | 'audio') => {
+    if (type === 'video') return { gradient: 'from-primary/30 to-primary/10', borderColor: 'border-primary/40', hoverBorder: 'border-primary/70' };
+    return { gradient: 'from-success/30 to-success/10', borderColor: 'border-success/40', hoverBorder: 'border-success/70' };
+  };
 
-  // Find transitions for a track to render diamonds
-  const getTransitionsForTrack = (trackKey: 'video' | 'audio') => {
-    const trackClips = timeline.clips.filter((c) => c.track === trackKey);
+  const getTransitionsForTrack = (trackId: string) => {
+    const trackClips = timeline.clips.filter((c) => c.track === trackId);
     return (timeline.transitions || []).filter((t) => {
       const from = trackClips.find((c) => c.id === t.fromClipId);
       const to = trackClips.find((c) => c.id === t.toClipId);
@@ -464,18 +412,10 @@ export function TimelineView() {
       {/* Transport controls */}
       <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2">
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => useProjectStore.temporal.getState().undo()}
-            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30"
-            title="Undo (Ctrl+Z)"
-          >
+          <button onClick={() => useProjectStore.temporal.getState().undo()} className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" title="Undo (Ctrl+Z)">
             <Undo2 className="h-4 w-4" />
           </button>
-          <button
-            onClick={() => useProjectStore.temporal.getState().redo()}
-            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30"
-            title="Redo (Ctrl+Shift+Z)"
-          >
+          <button onClick={() => useProjectStore.temporal.getState().redo()} className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" title="Redo (Ctrl+Shift+Z)">
             <Redo2 className="h-4 w-4" />
           </button>
           <div className="w-px h-5 bg-border mx-1" />
@@ -488,6 +428,23 @@ export function TimelineView() {
           <button onClick={() => setPlayhead(timeline.duration)} className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" title={t('timeline.end')}>
             <SkipForward className="h-4 w-4" />
           </button>
+          <div className="w-px h-5 bg-border mx-1" />
+          {/* Split tool */}
+          <button
+            onClick={() => {
+              if (selectedClipId) {
+                splitClip(selectedClipId, timeline.playheadPosition);
+                addLog('info', `Split clip at ${timeline.playheadPosition.toFixed(1)}s`);
+                toast.success('Clip split');
+              } else {
+                toast.error('Select a clip first');
+              }
+            }}
+            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            title="Split at Playhead (S)"
+          >
+            <Scissors className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5">
@@ -499,10 +456,19 @@ export function TimelineView() {
         <div className="flex items-center gap-3">
           {scenes.length > 0 && timeline.clips.length === 0 && (
             <button onClick={addSceneClips} className="flex items-center gap-1.5 rounded-md border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/10">
-              <Plus className="h-3 w-3" />
-              {t('timeline.addscenes')}
+              <Plus className="h-3 w-3" /> {t('timeline.addscenes')}
             </button>
           )}
+
+          {/* Add track buttons */}
+          <div className="flex items-center gap-1">
+            <button onClick={() => addTrack('video')} className="rounded p-1 text-[9px] font-mono text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-all" title="Add video track">
+              +V
+            </button>
+            <button onClick={() => addTrack('audio')} className="rounded p-1 text-[9px] font-mono text-muted-foreground/50 hover:text-success hover:bg-success/10 transition-all" title="Add audio track">
+              +A
+            </button>
+          </div>
 
           <div className="flex items-center gap-2">
             <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
@@ -518,11 +484,11 @@ export function TimelineView() {
         {[
           { key: 'Space', action: t('timeline.play') },
           { key: '←→', action: t('timeline.seek') },
+          { key: 'S', action: 'Split' },
           { key: 'T', action: 'Transition' },
           { key: 'D', action: 'Duplicate' },
           { key: 'Del', action: 'Delete' },
           { key: 'M', action: 'Marker' },
-          { key: 'Drop files', action: 'Import media' },
         ].map(({ key, action }) => (
           <span key={key} className="text-[10px] text-muted-foreground/50">
             <kbd className="rounded bg-border/50 px-1 py-0.5 font-mono text-[9px] text-muted-foreground">{key}</kbd>{' '}{action}
@@ -543,12 +509,9 @@ export function TimelineView() {
               onMouseLeave={() => setIsRulerDragging(false)}
               className="cursor-pointer border-b border-border"
             />
-            {/* Timeline Markers */}
+            {/* Markers */}
             {(timeline.markers || []).map((marker) => (
-              <div
-                key={marker.id}
-                className="absolute top-0 z-20 group cursor-pointer"
-                style={{ left: marker.time * pxPerSec - 5 }}
+              <div key={marker.id} className="absolute top-0 z-20 group cursor-pointer" style={{ left: marker.time * pxPerSec - 5 }}
                 onClick={(e) => { e.stopPropagation(); setPlayhead(marker.time); }}
                 onDoubleClick={(e) => { e.stopPropagation(); removeMarker(marker.id); toast.success('Marker removed'); }}
               >
@@ -562,30 +525,56 @@ export function TimelineView() {
             ))}
           </div>
 
-          {tracks.map(({ label, fullLabel, icon: Icon, trackKey, gradient, borderColor, hoverBorder }) => {
+          {/* Tracks */}
+          {tracks.map((trackConfig) => {
+            const { gradient, borderColor, hoverBorder } = getTrackColors(trackConfig.type);
             const trackClips = timeline.clips.filter((c) => {
-              if (dragState?.clipId === c.id && dragGhost) return dragGhost.track === trackKey;
-              return c.track === trackKey;
+              if (dragState?.clipId === c.id && dragGhost) return dragGhost.track === trackConfig.id;
+              return c.track === trackConfig.id;
             });
-            const dropActive = isDropTarget(trackKey);
-            const trackTransitions = getTransitionsForTrack(trackKey);
+            const dropActive = dragState && dragGhost?.track === trackConfig.id;
+            const trackTransitions = getTransitionsForTrack(trackConfig.id);
 
             return (
               <div
-                key={label}
+                key={trackConfig.id}
                 className={`flex border-b transition-colors ${
-                  fileDragOver === trackKey ? 'border-primary bg-primary/10' :
+                  fileDragOver === trackConfig.id ? 'border-primary bg-primary/10' :
                   dropActive ? 'border-primary/60 bg-primary/5' : 'border-border'
                 }`}
-                onDragOver={(e) => handleFileDragOver(e, trackKey)}
-                onDragLeave={handleFileDragLeave}
-                onDrop={(e) => handleFileDrop(e, trackKey)}
+                onDragOver={(e) => { e.preventDefault(); setFileDragOver(trackConfig.id); }}
+                onDragLeave={() => setFileDragOver(null)}
+                onDrop={(e) => handleFileDrop(e, trackConfig.id)}
               >
-                <div className="flex w-20 shrink-0 flex-col items-center justify-center border-r border-border bg-card py-4 gap-1">
-                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-[10px] font-mono text-muted-foreground font-bold">{label}</span>
+                {/* Track header */}
+                <div className="flex w-20 shrink-0 flex-col items-center justify-center border-r border-border bg-card py-2 gap-0.5">
+                  <div className="flex items-center gap-1">
+                    {trackConfig.type === 'video' ? <Film className="h-3 w-3 text-muted-foreground" /> : <Volume2 className="h-3 w-3 text-muted-foreground" />}
+                    <span className="text-[10px] font-mono text-muted-foreground font-bold">{trackConfig.label}</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={() => updateTrack(trackConfig.id, { muted: !trackConfig.muted })}
+                      className={`rounded p-0.5 transition-colors ${trackConfig.muted ? 'text-destructive' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
+                      title={trackConfig.muted ? 'Unmute' : 'Mute'}
+                    >
+                      {trackConfig.type === 'audio' 
+                        ? (trackConfig.muted ? <VolumeX className="h-2.5 w-2.5" /> : <Volume2 className="h-2.5 w-2.5" />)
+                        : (trackConfig.muted ? <EyeOff className="h-2.5 w-2.5" /> : <Eye className="h-2.5 w-2.5" />)
+                      }
+                    </button>
+                    <button
+                      onClick={() => updateTrack(trackConfig.id, { locked: !trackConfig.locked })}
+                      className={`rounded p-0.5 transition-colors ${trackConfig.locked ? 'text-warning' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
+                      title={trackConfig.locked ? 'Unlock' : 'Lock'}
+                    >
+                      {trackConfig.locked ? <Lock className="h-2.5 w-2.5" /> : <Unlock className="h-2.5 w-2.5" />}
+                    </button>
+                  </div>
                 </div>
-                <div className="relative flex-1 bg-background/30" style={{ minHeight: 64 }}>
+
+                {/* Track content */}
+                <div className={`relative flex-1 bg-background/30 ${trackConfig.locked ? 'opacity-50 pointer-events-none' : ''}`} style={{ minHeight: trackConfig.height }}>
                   {/* Playhead line */}
                   <div className="absolute top-0 bottom-0 w-px bg-primary/80 z-10 pointer-events-none" style={{ left: timeline.playheadPosition * pxPerSec }} />
 
@@ -596,36 +585,24 @@ export function TimelineView() {
                     </div>
                   )}
 
-                  {/* Transition diamonds between clips */}
+                  {/* Transition diamonds */}
                   {trackTransitions.map((trans) => {
                     const fromClip = timeline.clips.find((c) => c.id === trans.fromClipId);
                     if (!fromClip) return null;
                     const x = (fromClip.startTime + fromClip.duration) * pxPerSec;
                     const isSelected = selectedTransitionId === trans.id;
                     return (
-                      <div
-                        key={trans.id}
-                        className={`absolute z-30 cursor-pointer group`}
+                      <div key={trans.id} className="absolute z-30 cursor-pointer group"
                         style={{ left: x - 10, top: '50%', transform: 'translateY(-50%)' }}
                         onClick={(e) => { e.stopPropagation(); setSelectedTransitionId(trans.id); }}
                         onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                          e.preventDefault(); e.stopPropagation();
                           setTransitionMenu({ x: e.clientX, y: e.clientY, fromClipId: trans.fromClipId, toClipId: trans.toClipId });
                         }}
                       >
-                        {/* Diamond shape */}
                         <div className={`w-5 h-5 rotate-45 rounded-sm border-2 transition-all ${
-                          isSelected
-                            ? 'bg-warning border-warning shadow-lg shadow-warning/30'
-                            : 'bg-warning/20 border-warning/50 group-hover:bg-warning/40 group-hover:border-warning/80'
+                          isSelected ? 'bg-warning border-warning shadow-lg shadow-warning/30' : 'bg-warning/20 border-warning/50 group-hover:bg-warning/40'
                         }`} />
-                        {/* Transition duration area */}
-                        <div
-                          className="absolute -left-1 top-1/2 -translate-y-1/2 h-3 bg-warning/10 border-t border-b border-warning/20 pointer-events-none"
-                          style={{ width: trans.duration * pxPerSec + 2 }}
-                        />
-                        {/* Label on hover */}
                         <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                           <span className="text-[8px] font-mono text-warning bg-card/90 backdrop-blur-sm rounded px-1 py-0.5 border border-warning/20">
                             {TRANSITION_OPTIONS.find((o) => o.value === trans.type)?.label || trans.type} {trans.duration}s
@@ -649,19 +626,16 @@ export function TimelineView() {
                         className={`absolute top-1.5 bottom-1.5 rounded border ${isActive ? hoverBorder : selectedClipId === clip.id ? 'border-primary ring-1 ring-primary/40' : borderColor} bg-gradient-to-r ${gradient} flex items-center select-none transition-shadow ${isActive ? 'shadow-lg shadow-primary/20 ring-1 ring-primary/30' : 'hover:shadow-lg hover:shadow-primary/10'} group`}
                         style={style}
                         onClick={(e) => { e.stopPropagation(); setSelectedClipId(clip.id); }}
-                        onMouseDown={(e) => { if (e.button === 0) handleClipDragStart(e, clip); }}
+                        onMouseDown={(e) => { if (e.button === 0 && !trackConfig.locked) handleClipDragStart(e, clip); }}
                         onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                          e.preventDefault(); e.stopPropagation();
                           setSelectedClipId(clip.id);
                           setContextMenu({ x: e.clientX, y: e.clientY, clipId: clip.id });
                         }}
                       >
-                        {/* Left resize handle */}
-                        <div
-                          className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-20 flex items-center justify-center hover:bg-foreground/10 rounded-l transition-colors"
-                          onMouseDown={(e) => handleResizeStart(e, clip, 'left')}
-                        >
+                        {/* Left resize */}
+                        <div className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-20 flex items-center justify-center hover:bg-foreground/10 rounded-l transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, clip, 'left')}>
                           <div className="w-0.5 h-4 bg-foreground/20 rounded-full group-hover:bg-foreground/40 transition-colors" />
                         </div>
 
@@ -678,8 +652,11 @@ export function TimelineView() {
                                   : `${clip.duration}s`}
                               </span>
                             )}
+                            {clip.speed && clip.speed !== 1 && (style.width || 0) > 100 && (
+                              <span className="text-[8px] font-mono text-warning/70 bg-warning/10 rounded px-1">{clip.speed}x</span>
+                            )}
                           </div>
-                          {trackKey === 'audio' && (style.width || 0) > 60 && (
+                          {trackConfig.type === 'audio' && (style.width || 0) > 60 && (
                             <div className="ml-2 flex items-center gap-px h-5 flex-1 overflow-hidden">
                               {Array.from({ length: Math.floor((style.width || 0) / 4) }).map((_, j) => (
                                 <div key={j} className="w-0.5 bg-success/40 rounded-full shrink-0" style={{ height: `${Math.random() * 100}%`, minHeight: 2 }} />
@@ -688,11 +665,9 @@ export function TimelineView() {
                           )}
                         </div>
 
-                        {/* Right resize handle */}
-                        <div
-                          className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-20 flex items-center justify-center hover:bg-foreground/10 rounded-r transition-colors"
-                          onMouseDown={(e) => handleResizeStart(e, clip, 'right')}
-                        >
+                        {/* Right resize */}
+                        <div className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-20 flex items-center justify-center hover:bg-foreground/10 rounded-r transition-colors"
+                          onMouseDown={(e) => handleResizeStart(e, clip, 'right')}>
                           <div className="w-0.5 h-4 bg-foreground/20 rounded-full group-hover:bg-foreground/40 transition-colors" />
                         </div>
                       </div>
@@ -700,92 +675,70 @@ export function TimelineView() {
                   })}
 
                   {/* File drag overlay */}
-                  {fileDragOver === trackKey && (
+                  {fileDragOver === trackConfig.id && (
                     <div className="absolute inset-0 flex items-center justify-center bg-primary/5 border-2 border-dashed border-primary/40 rounded z-40 pointer-events-none">
                       <div className="flex items-center gap-2 text-primary">
                         <Upload className="h-4 w-4" />
-                        <span className="text-xs font-bold font-display">Drop media files here</span>
+                        <span className="text-xs font-bold font-display">Drop files here</span>
                       </div>
                     </div>
                   )}
 
-                  {trackClips.length === 0 && !dropActive && fileDragOver !== trackKey && (
-                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground/30 font-mono">{fullLabel}</div>
+                  {trackClips.length === 0 && !dropActive && fileDragOver !== trackConfig.id && (
+                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground/30 font-mono">
+                      {trackConfig.type === 'video' ? 'Drop video/image' : 'Drop audio'}
+                    </div>
                   )}
                 </div>
               </div>
             );
           })}
 
+          {/* Add track row */}
           <div className="flex border-b border-border/50">
-            <div className="flex w-20 shrink-0 items-center justify-center border-r border-border/50 bg-card/50 py-3">
-              <Plus className="h-3 w-3 text-muted-foreground/30" />
+            <div className="flex w-20 shrink-0 items-center justify-center border-r border-border/50 bg-card/50 py-3 gap-2">
+              <button onClick={() => addTrack('video')} className="text-[8px] font-mono text-muted-foreground/30 hover:text-primary transition-colors" title="Add video track">+V</button>
+              <button onClick={() => addTrack('audio')} className="text-[8px] font-mono text-muted-foreground/30 hover:text-success transition-colors" title="Add audio track">+A</button>
             </div>
-            <div className="flex-1 bg-background/10" style={{ minHeight: 40 }} />
+            <div className="flex-1 bg-background/10" style={{ minHeight: 32 }} />
           </div>
         </div>
       </div>
 
       {/* Clip context menu */}
       {contextMenu && (
-        <div
-          className="fixed z-50 w-52 rounded-lg border border-border bg-card/95 backdrop-blur-xl p-1 shadow-xl shadow-background/50"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
-            onClick={() => {
-              duplicateClip(contextMenu.clipId);
-              addLog('info', 'Duplicated clip');
-              setContextMenu(null);
-            }}
-          >
-            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-            Duplicate
+        <div className="fixed z-50 w-52 rounded-lg border border-border bg-card/95 backdrop-blur-xl p-1 shadow-xl shadow-background/50"
+          style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(e) => e.stopPropagation()}>
+          <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
+            onClick={() => { duplicateClip(contextMenu.clipId); addLog('info', 'Duplicated'); setContextMenu(null); }}>
+            <Copy className="h-3.5 w-3.5 text-muted-foreground" /> Duplicate
             <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">D</kbd>
           </button>
-
-          {/* Add transition submenu */}
-          <div className="relative group/trans">
-            <button
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
-              onClick={() => {
-                const clip = timeline.clips.find((c) => c.id === contextMenu.clipId);
-                if (clip) {
-                  const nextClip = timeline.clips
-                    .filter((c) => c.track === clip.track && c.startTime > clip.startTime)
-                    .sort((a, b) => a.startTime - b.startTime)[0];
-                  if (nextClip) {
-                    addTransition({ type: 'dissolve', duration: 0.5, fromClipId: clip.id, toClipId: nextClip.id });
-                    addLog('info', 'Added dissolve transition');
-                    toast.success('Transition added');
-                  } else {
-                    toast.error('No next clip to transition to');
-                  }
-                }
-                setContextMenu(null);
-              }}
-            >
-              <Shuffle className="h-3.5 w-3.5 text-muted-foreground" />
-              Add Transition →
-              <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">T</kbd>
-            </button>
-          </div>
-
-          <div className="h-px bg-border my-0.5" />
-
-          <button
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+          <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
             onClick={() => {
-              removeClip(contextMenu.clipId);
-              addLog('info', 'Deleted clip');
-              setSelectedClipId(null);
+              splitClip(contextMenu.clipId, timeline.playheadPosition);
+              addLog('info', 'Split clip'); toast.success('Clip split'); setContextMenu(null);
+            }}>
+            <Scissors className="h-3.5 w-3.5 text-muted-foreground" /> Split at Playhead
+            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">S</kbd>
+          </button>
+          <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors"
+            onClick={() => {
+              const clip = timeline.clips.find((c) => c.id === contextMenu.clipId);
+              if (clip) {
+                const nextClip = timeline.clips.filter((c) => c.track === clip.track && c.startTime > clip.startTime).sort((a, b) => a.startTime - b.startTime)[0];
+                if (nextClip) { addTransition({ type: 'dissolve', duration: 0.5, fromClipId: clip.id, toClipId: nextClip.id }); toast.success('Transition added'); }
+                else { toast.error('No next clip'); }
+              }
               setContextMenu(null);
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete
+            }}>
+            <Shuffle className="h-3.5 w-3.5 text-muted-foreground" /> Add Transition →
+            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">T</kbd>
+          </button>
+          <div className="h-px bg-border my-0.5" />
+          <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            onClick={() => { removeClip(contextMenu.clipId); addLog('info', 'Deleted'); setSelectedClipId(null); setContextMenu(null); }}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
             <kbd className="ml-auto text-[9px] font-mono text-muted-foreground/50 bg-border/50 px-1 rounded">Del</kbd>
           </button>
         </div>
@@ -793,11 +746,8 @@ export function TimelineView() {
 
       {/* Transition context menu */}
       {transitionMenu && (
-        <div
-          className="fixed z-50 w-48 rounded-lg border border-border bg-card/95 backdrop-blur-xl p-1 shadow-xl shadow-background/50"
-          style={{ left: transitionMenu.x, top: transitionMenu.y }}
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="fixed z-50 w-48 rounded-lg border border-border bg-card/95 backdrop-blur-xl p-1 shadow-xl shadow-background/50"
+          style={{ left: transitionMenu.x, top: transitionMenu.y }} onClick={(e) => e.stopPropagation()}>
           <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider">Transition Type</p>
           {TRANSITION_OPTIONS.map((opt) => {
             const existing = (timeline.transitions || []).find(
@@ -805,33 +755,18 @@ export function TimelineView() {
             );
             const isActive = existing?.type === opt.value;
             return (
-              <button
-                key={opt.value}
-                className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs transition-colors ${
-                  isActive ? 'bg-primary/15 text-primary' : 'text-foreground hover:bg-secondary'
-                }`}
+              <button key={opt.value}
+                className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs transition-colors ${isActive ? 'bg-primary/15 text-primary' : 'text-foreground hover:bg-secondary'}`}
                 onClick={() => {
-                  if (existing) {
-                    if (opt.value === 'none') {
-                      removeTransition(existing.id);
-                    } else {
-                      updateTransition(existing.id, { type: opt.value });
-                    }
-                  } else if (opt.value !== 'none') {
-                    addTransition({ type: opt.value, duration: 0.5, fromClipId: transitionMenu.fromClipId, toClipId: transitionMenu.toClipId });
-                  }
-                  setTransitionMenu(null);
-                  addLog('info', `Transition: ${opt.label}`);
-                }}
-              >
-                <span className="w-4 text-center">{opt.icon}</span>
-                {opt.label}
+                  if (existing) { opt.value === 'none' ? removeTransition(existing.id) : updateTransition(existing.id, { type: opt.value }); }
+                  else if (opt.value !== 'none') { addTransition({ type: opt.value, duration: 0.5, fromClipId: transitionMenu.fromClipId, toClipId: transitionMenu.toClipId }); }
+                  setTransitionMenu(null); addLog('info', `Transition: ${opt.label}`);
+                }}>
+                <span className="w-4 text-center">{opt.icon}</span> {opt.label}
                 {isActive && <span className="ml-auto text-[9px] text-primary">●</span>}
               </button>
             );
           })}
-
-          {/* Duration control */}
           {(() => {
             const existing = (timeline.transitions || []).find(
               (t) => t.fromClipId === transitionMenu.fromClipId && t.toClipId === transitionMenu.toClipId
@@ -843,16 +778,10 @@ export function TimelineView() {
                   <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider">Duration</span>
                   <span className="text-[10px] font-mono text-primary">{existing.duration}s</span>
                 </label>
-                <input
-                  type="range"
-                  min={0.25}
-                  max={3}
-                  step={0.25}
-                  value={existing.duration}
+                <input type="range" min={0.25} max={3} step={0.25} value={existing.duration}
                   onChange={(e) => updateTransition(existing.id, { duration: parseFloat(e.target.value) })}
                   className="w-full h-1 cursor-pointer appearance-none rounded-full bg-border accent-primary"
-                  onClick={(e) => e.stopPropagation()}
-                />
+                  onClick={(e) => e.stopPropagation()} />
               </div>
             );
           })()}
