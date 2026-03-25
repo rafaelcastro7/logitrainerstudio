@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Activity, Sparkles, ArrowRight, Film, Trash2, FolderOpen, Coffee, ShoppingBag, GraduationCap, Gamepad2, Plus } from 'lucide-react';
+import { Activity, Sparkles, ArrowRight, Film, Trash2, FolderOpen, Coffee, ShoppingBag, GraduationCap, Gamepad2, Plus, Megaphone, Heart, Building2, Music } from 'lucide-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useAuth } from '@/hooks/useAuth';
