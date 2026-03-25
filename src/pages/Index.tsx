@@ -23,6 +23,7 @@ import { ProjectSettingsPanel } from '@/components/panels/ProjectSettingsPanel';
 import { RenderExportPanel } from '@/components/panels/RenderExportPanel';
 import { KeyboardShortcutsHelp } from '@/components/panels/KeyboardShortcutsHelp';
 import { ColorGradingPanel } from '@/components/panels/ColorGradingPanel';
+import { ReferralPanel } from '@/components/panels/ReferralPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
@@ -140,6 +141,7 @@ const Index = () => {
       case 'studio': return <StudioView onOpenImageLab={(id) => setImageLabSceneId(id)} />;
       case 'timeline': return <TimelineView />;
       case 'dashboard': return <DashboardView />;
+      case 'referrals': return <ReferralPanel />;
     }
   };
 
