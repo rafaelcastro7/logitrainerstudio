@@ -141,6 +141,7 @@ const Index = () => {
       case 'studio': return <StudioView onOpenImageLab={(id) => setImageLabSceneId(id)} />;
       case 'timeline': return <TimelineView />;
       case 'dashboard': return <DashboardView />;
+      case 'referrals': return <ReferralPanel />;
     }
   };
 
