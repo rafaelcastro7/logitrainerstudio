@@ -19,6 +19,10 @@ const templates = [
   { icon: ShoppingBag, title: 'E-Commerce', brief: 'A fast-paced e-commerce promotional video with dynamic transitions, upbeat music, and clear call-to-action overlays.', color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/20' },
   { icon: GraduationCap, title: 'Educational', brief: 'An engaging educational explainer video with clear visuals, step-by-step demos, and friendly narration.', color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/20' },
   { icon: Gamepad2, title: 'Gaming Trailer', brief: 'An epic gaming trailer with fast cuts, neon aesthetics, intense music, and dramatic transitions.', color: 'text-destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive/20' },
+  { icon: Megaphone, title: 'Social Media', brief: 'A vertical-format social media reel optimized for TikTok/Instagram with trending transitions and captions.', color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/20' },
+  { icon: Heart, title: 'Testimonial', brief: 'A professional customer testimonial video with b-roll footage, lower-thirds, and emotional storytelling.', color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/20' },
+  { icon: Building2, title: 'Corporate', brief: 'A polished corporate presentation video with data visualizations, executive narration, and brand consistency.', color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/20' },
+  { icon: Music, title: 'Music Video', brief: 'A creative music video with beat-synced transitions, visual effects, color grading, and artistic compositions.', color: 'text-destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive/20' },
 ];
 
 export function WelcomeScreen({ onEnter, recentProjects = [], onLoadProject, onDeleteProject }: WelcomeScreenProps) {
