@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Gift, Copy, CheckCircle, Users, Share2, Trophy, Loader2, Star, Zap, Crown, Medal, QrCode } from 'lucide-react';
+import { Gift, Copy, CheckCircle, Users, Share2, Trophy, Loader2, Star, Zap, Crown, Medal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
