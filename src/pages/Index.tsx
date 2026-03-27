@@ -147,6 +147,7 @@ const Index = () => {
       case 'marketing': return <MarketingContentPanel />;
       case 'connectors': return <ConnectorsPanel />;
       case 'referrals': return <ReferralPanel />;
+      case 'scheduler': return <SchedulerPanel />;
     }
   };
 
