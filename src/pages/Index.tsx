@@ -26,6 +26,7 @@ import { ColorGradingPanel } from '@/components/panels/ColorGradingPanel';
 import { ReferralPanel } from '@/components/panels/ReferralPanel';
 import { MarketingContentPanel } from '@/components/panels/MarketingContentPanel';
 import { ConnectorsPanel } from '@/components/panels/ConnectorsPanel';
+import { SchedulerPanel } from '@/components/panels/SchedulerPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
