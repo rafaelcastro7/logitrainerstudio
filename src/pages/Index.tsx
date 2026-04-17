@@ -27,6 +27,9 @@ import { ReferralPanel } from '@/components/panels/ReferralPanel';
 import { MarketingContentPanel } from '@/components/panels/MarketingContentPanel';
 import { ConnectorsPanel } from '@/components/panels/ConnectorsPanel';
 import { SchedulerPanel } from '@/components/panels/SchedulerPanel';
+import { EmailAutomationPanel } from '@/components/panels/EmailAutomationPanel';
+import { WebhookTriggersPanel } from '@/components/panels/WebhookTriggersPanel';
+import { TemplatesMarketplacePanel } from '@/components/panels/TemplatesMarketplacePanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
@@ -148,6 +151,9 @@ const Index = () => {
       case 'connectors': return <ConnectorsPanel />;
       case 'referrals': return <ReferralPanel />;
       case 'scheduler': return <SchedulerPanel />;
+      case 'email': return <EmailAutomationPanel />;
+      case 'webhooks': return <WebhookTriggersPanel />;
+      case 'marketplace': return <TemplatesMarketplacePanel />;
     }
   };
 
