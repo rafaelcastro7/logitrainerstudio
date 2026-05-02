@@ -1,4 +1,4 @@
-import { FileText, Clapperboard, Clock, Bot, Activity, Bell, BarChart3, Gift, Megaphone, Plug, CalendarDays, Mail, Webhook, Store } from 'lucide-react';
+import { FileText, Clapperboard, Clock, Bot, Activity, Bell, BarChart3, Gift, Megaphone, Plug, CalendarDays, Mail, Webhook, Store, Sparkles } from 'lucide-react';
 import { useProjectStore, ViewMode } from '@/store/useProjectStore';
 import { useAlertStore } from '@/store/useAlertStore';
 import { useI18n } from '@/i18n/useI18n';
@@ -17,6 +17,7 @@ export function AppSidebar({ onToggleAlerts, isAlertsOpen }: { onToggleAlerts?: 
     { view: 'studio', icon: Clapperboard, label: t('nav.studio'), sub: t('nav.studio.sub') },
     { view: 'timeline', icon: Clock, label: t('nav.timeline'), sub: t('nav.timeline.sub') },
     { view: 'dashboard', icon: BarChart3, label: 'Dashboard', sub: 'API Observability' },
+    { view: 'agents' as ViewMode, icon: Sparkles, label: 'Agent Crew', sub: 'AI Orchestrator' },
     { view: 'marketing' as ViewMode, icon: Megaphone, label: 'Marketing', sub: 'Content Generator' },
     { view: 'email' as ViewMode, icon: Mail, label: 'Email Builder', sub: 'AI Sequences' },
     { view: 'scheduler' as ViewMode, icon: CalendarDays, label: 'Scheduler', sub: 'Social Calendar' },
