@@ -30,6 +30,7 @@ import { SchedulerPanel } from '@/components/panels/SchedulerPanel';
 import { EmailAutomationPanel } from '@/components/panels/EmailAutomationPanel';
 import { WebhookTriggersPanel } from '@/components/panels/WebhookTriggersPanel';
 import { TemplatesMarketplacePanel } from '@/components/panels/TemplatesMarketplacePanel';
+import { AgentCrewPanel } from '@/components/panels/AgentCrewPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAlertEngine } from '@/hooks/useAlertEngine';
 import { requestNotificationPermission } from '@/lib/notifications';
@@ -154,6 +155,7 @@ const Index = () => {
       case 'email': return <EmailAutomationPanel />;
       case 'webhooks': return <WebhookTriggersPanel />;
       case 'marketplace': return <TemplatesMarketplacePanel />;
+      case 'agents': return <AgentCrewPanel />;
     }
   };
 
