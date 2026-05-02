@@ -14,6 +14,258 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_crews: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          mission: string
+          name: string
+          orchestrator_agent_id: string | null
+          process_type: string
+          total_runs: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          mission: string
+          name: string
+          orchestrator_agent_id?: string | null
+          process_type?: string
+          total_runs?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          mission?: string
+          name?: string
+          orchestrator_agent_id?: string | null
+          process_type?: string
+          total_runs?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_crews_orchestrator_agent_id_fkey"
+            columns: ["orchestrator_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_executions: {
+        Row: {
+          agent_id: string | null
+          completed_at: string | null
+          cost: number
+          created_at: string
+          crew_id: string | null
+          error: string | null
+          id: string
+          input: string
+          latency_ms: number
+          model: string | null
+          output: Json | null
+          parent_execution_id: string | null
+          started_at: string
+          status: string
+          tokens_used: number
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          completed_at?: string | null
+          cost?: number
+          created_at?: string
+          crew_id?: string | null
+          error?: string | null
+          id?: string
+          input: string
+          latency_ms?: number
+          model?: string | null
+          output?: Json | null
+          parent_execution_id?: string | null
+          started_at?: string
+          status?: string
+          tokens_used?: number
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          completed_at?: string | null
+          cost?: number
+          created_at?: string
+          crew_id?: string | null
+          error?: string | null
+          id?: string
+          input?: string
+          latency_ms?: number
+          model?: string | null
+          output?: Json | null
+          parent_execution_id?: string | null
+          started_at?: string
+          status?: string
+          tokens_used?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_executions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_executions_crew_id_fkey"
+            columns: ["crew_id"]
+            isOneToOne: false
+            referencedRelation: "agent_crews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_executions_parent_execution_id_fkey"
+            columns: ["parent_execution_id"]
+            isOneToOne: false
+            referencedRelation: "agent_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_logs: {
+        Row: {
+          agent_id: string | null
+          content: string
+          created_at: string
+          execution_id: string
+          id: string
+          log_type: string
+          metadata: Json | null
+          step_number: number
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          content: string
+          created_at?: string
+          execution_id: string
+          id?: string
+          log_type: string
+          metadata?: Json | null
+          step_number?: number
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          content?: string
+          created_at?: string
+          execution_id?: string
+          id?: string
+          log_type?: string
+          metadata?: Json | null
+          step_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_logs_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "agent_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          avg_latency_ms: number
+          backstory: string | null
+          category: string
+          color: string | null
+          created_at: string
+          goal: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_template: boolean
+          model: string
+          name: string
+          role: string
+          success_count: number
+          system_prompt: string
+          temperature: number
+          tools: Json
+          total_executions: number
+          total_tokens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_latency_ms?: number
+          backstory?: string | null
+          category?: string
+          color?: string | null
+          created_at?: string
+          goal: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_template?: boolean
+          model?: string
+          name: string
+          role: string
+          success_count?: number
+          system_prompt: string
+          temperature?: number
+          tools?: Json
+          total_executions?: number
+          total_tokens?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_latency_ms?: number
+          backstory?: string | null
+          category?: string
+          color?: string | null
+          created_at?: string
+          goal?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_template?: boolean
+          model?: string
+          name?: string
+          role?: string
+          success_count?: number
+          system_prompt?: string
+          temperature?: number
+          tools?: Json
+          total_executions?: number
+          total_tokens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       alert_settings: {
         Row: {
           alerts_enabled: boolean
@@ -52,6 +304,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      crew_members: {
+        Row: {
+          agent_id: string
+          created_at: string
+          crew_id: string
+          id: string
+          position: number
+          task_description: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          crew_id: string
+          id?: string
+          position?: number
+          task_description?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          crew_id?: string
+          id?: string
+          position?: number
+          task_description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_members_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crew_members_crew_id_fkey"
+            columns: ["crew_id"]
+            isOneToOne: false
+            referencedRelation: "agent_crews"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_sequences: {
         Row: {
